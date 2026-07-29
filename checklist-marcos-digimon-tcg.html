@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcos — App Biblioteca Digimon TCG</title>
+<style>
+  :root{
+    --bg:#0a0e17;
+    --panel:#111827;
+    --panel-2:#0d1420;
+    --line:#1f2b3d;
+    --line-strong:#2c3d56;
+    --ink:#e6edf6;
+    --ink-2:#8ea3bf;
+    --ink-3:#5b6f8c;
+    --cyan:#22d3ee;
+    --cyan-deep:#0e7490;
+    --amber:#f5a623;
+    --green:#3ddc84;
+    --radius:12px;
+    --font: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1100px 600px at 82% -8%, rgba(34,211,238,.10), transparent 60%),
+      radial-gradient(900px 500px at 5% 105%, rgba(245,166,35,.06), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font);
+    line-height:1.6;
+    min-height:100vh;
+    padding:32px 20px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto}
+
+  /* Header */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--cyan);opacity:.7}
+  h1{
+    font-size:clamp(28px,5vw,42px);font-weight:600;letter-spacing:-.02em;line-height:1.08;
+    margin-bottom:12px;
+  }
+  h1 .accent{
+    background:linear-gradient(90deg,var(--cyan),#7dd3fc);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{color:var(--ink-2);font-size:15px;max-width:620px;margin-bottom:8px}
+  .scope{
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);
+    border-left:2px solid var(--line-strong);padding-left:12px;margin-top:16px;
+  }
+
+  /* Overall progress — signature element */
+  .hero-progress{
+    margin:34px 0 40px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:22px 24px;
+  }
+  .hp-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+  .hp-label{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+  .hp-count{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+  .hp-count b{color:var(--ink);font-weight:600}
+  .hp-pct{font-size:34px;font-weight:600;letter-spacing:-.02em;font-family:var(--mono)}
+  .hp-pct .u{font-size:18px;color:var(--ink-3)}
+  .ladder{display:flex;gap:5px;margin-top:18px}
+  .ladder .seg{
+    flex:1;height:8px;border-radius:3px;background:var(--line);
+    transition:background .35s ease, box-shadow .35s ease;
+  }
+  .ladder .seg.on{background:linear-gradient(90deg,var(--cyan-deep),var(--cyan));box-shadow:0 0 12px rgba(34,211,238,.45)}
+  .ladder-tags{display:flex;justify-content:space-between;margin-top:8px}
+  .ladder-tags span{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.05em}
+
+  /* Milestone blocks */
+  .block{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:16px;overflow:hidden;transition:border-color .2s ease;
+  }
+  .block:hover{border-color:var(--line-strong)}
+  .block.done{border-color:rgba(61,220,132,.35)}
+  .block-head{
+    display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none;
+  }
+  .idx{
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--cyan);
+    min-width:40px;letter-spacing:.05em;
+  }
+  .block.done .idx{color:var(--green)}
+  .block-title{flex:1;min-width:0}
+  .block-title h2{font-size:17px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ver{
+    font-family:var(--mono);font-size:10px;color:var(--ink-2);
+    border:1px solid var(--line-strong);border-radius:20px;padding:2px 9px;letter-spacing:.05em;
+  }
+  .block-title p{font-size:13px;color:var(--ink-3);margin-top:3px}
+  .block-meta{display:flex;align-items:center;gap:16px}
+  .mini-bar{width:74px;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+  .mini-bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .35s ease}
+  .block.done .mini-bar i{background:var(--green)}
+  .mini-count{font-family:var(--mono);font-size:12px;color:var(--ink-2);min-width:34px;text-align:right}
+  .chev{color:var(--ink-3);transition:transform .25s ease;font-size:18px;line-height:1}
+  .block.open .chev{transform:rotate(90deg)}
+
+  .tasks{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .tasks-inner{padding:2px 22px 18px 22px}
+  .task{
+    display:flex;align-items:flex-start;gap:13px;padding:11px 0;
+    border-top:1px solid var(--line);cursor:pointer;
+  }
+  .task:first-child{border-top:1px solid var(--line-strong)}
+  .cbox{
+    flex-shrink:0;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--line-strong);
+    margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .18s ease;
+  }
+  .cbox svg{width:11px;height:11px;opacity:0;transform:scale(.5);transition:all .18s ease;stroke:#06131e}
+  .task.checked .cbox{background:var(--cyan);border-color:var(--cyan)}
+  .task.checked .cbox svg{opacity:1;transform:scale(1)}
+  .task-body{flex:1}
+  .task-body .t{font-size:14.5px;color:var(--ink);transition:color .18s ease}
+  .task-body .d{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+  .task.checked .task-body .t{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+
+  /* Beta marker */
+  .beta{
+    margin-top:26px;border:1px dashed var(--line-strong);border-radius:var(--radius);
+    padding:22px 24px;display:flex;align-items:center;gap:18px;background:var(--panel-2);
+  }
+  .beta-badge{
+    font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;
+    color:var(--bg);background:var(--amber);padding:6px 12px;border-radius:6px;flex-shrink:0;
+  }
+  .beta.reached .beta-badge{background:var(--green)}
+  .beta-text h3{font-size:16px;font-weight:600;margin-bottom:2px}
+  .beta-text p{font-size:13px;color:var(--ink-2)}
+
+  /* Footer controls */
+  .foot{margin-top:34px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+  .legend{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.03em}
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--ink-2);
+    background:transparent;border:1px solid var(--line-strong);border-radius:8px;
+    padding:9px 16px;cursor:pointer;transition:all .18s ease;
+  }
+  .btn:hover{color:var(--ink);border-color:var(--cyan);background:rgba(34,211,238,.06)}
+  .save-hint{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);opacity:0;transition:opacity .3s ease}
+  .save-hint.show{opacity:1}
+
+  @media (max-width:560px){
+    .block-meta .mini-bar{display:none}
+    .hp-pct{font-size:28px}
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Roadmap de desenvolvimento · até o beta 1.0</div>
+  <h1>Biblioteca <span class="accent">Digimon TCG</span><br>Marcos de implementação</h1>
+  <p class="sub">O norte da equipe até a versão 1.0 beta. Cada bloco é um marco de versão; marque as tarefas conforme avançam — o progresso fica salvo neste dispositivo.</p>
+  <p class="scope">// escopo v1.0: biblioteca · busca · filtros · deck builder — pesquisa de preços fica para depois</p>
+
+  <div class="hero-progress">
+    <div class="hp-top">
+      <div>
+        <div class="hp-label">Progresso geral</div>
+        <div class="hp-count"><b id="doneTasks">0</b> de <b id="totalTasks">0</b> tarefas concluídas</div>
+      </div>
+      <div class="hp-pct"><span id="pctNum">0</span><span class="u">%</span></div>
+    </div>
+    <div class="ladder" id="ladder"></div>
+    <div class="ladder-tags">
+      <span>v0.1</span><span>Biblioteca</span><span>Busca</span><span>Deck</span><span>Beta 1.0</span>
+    </div>
+  </div>
+
+  <div id="blocks"></div>
+
+  <div class="beta" id="betaMarker">
+    <span class="beta-badge">BETA 1.0</span>
+    <div class="beta-text">
+      <h3>Publicação do beta</h3>
+      <p>Biblioteca, busca, filtros e deck builder completos e validados, distribuídos via TestFlight e Google Play Internal.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="legend">progresso salvo automaticamente · <span id="saveHint" class="save-hint">✓ salvo</span></div>
+    <button class="btn" id="resetBtn">Limpar progresso</button>
+  </div>
+
+</div>
+
+<script>
+const DATA = [
+  {
+    id:"b0", idx:"00", title:"Fundação", ver:"v0.1 – v0.3",
+    desc:"Setup, modelagem e integração com a API",
+    tasks:[
+      {id:"t1", t:"Setup do projeto (v0.1)", d:"React Native + Expo, EAS Build, linter, navegação esqueleto"},
+      {id:"t2", t:"Modelagem de dados (v0.2)", d:"Schema card ↔ printing em Drizzle + expo-sqlite, N:N, link_detail, migrations"},
+      {id:"t3", t:"Integração com a API (v0.3)", d:"Endpoints do digimoncard.app via TanStack Query, normalização card + printing"},
+    ]
+  },
+  {
+    id:"b1", idx:"01", title:"Biblioteca base", ver:"v0.4 – v0.6",
+    desc:"Persistência local, listagem e detalhe",
+    tasks:[
+      {id:"t4", t:"Cache e persistência local (v0.4)", d:"Dataset no SQLite, sync inicial, dataset_version em MMKV"},
+      {id:"t5", t:"Listagem da biblioteca (v0.5)", d:"FlashList + expo-image, lazy load, foco em performance de scroll"},
+      {id:"t6", t:"Detalhe da carta (v0.6)", d:"Arte em alta, efeito, keywords, herança, segurança, múltiplas versões"},
+    ]
+  },
+  {
+    id:"b2", idx:"02", title:"Busca e filtros", ver:"v0.7 – v0.9",
+    desc:"Search textual, filtros facetados e ordenação",
+    tasks:[
+      {id:"t7", t:"Search textual (v0.7)", d:"SQLite FTS5 sobre nome, atributo, forma, efeito, herança, keyword, type"},
+      {id:"t8", t:"Filtros por atributo (v0.8)", d:"Cor, category, raridade, coleção, versão, level, type, keyword, custos"},
+      {id:"t9", t:"Ordenação e presets (v0.9)", d:"Ordenar por numeração, level, DP, custo, raridade; filtros favoritos"},
+    ]
+  },
+  {
+    id:"b3", idx:"03", title:"Deck Builder", ver:"v0.10 – v0.14",
+    desc:"Construção, regras de cópia e validação",
+    tasks:[
+      {id:"t10", t:"Estrutura do deck (v0.10)", d:"Main (50) + Digi-Egg (0–5), múltiplos decks persistidos"},
+      {id:"t11", t:"Adicionar/remover cartas (v0.11)", d:"Tela dividida biblioteca ↔ deck, contador de cópias"},
+      {id:"t12", t:"Regras de cópias (v0.12)", d:"Contagem por card_id, copy_limit (0/1/4/50)"},
+      {id:"t13", t:"Validação de deck (v0.13)", d:"50 no main, 0–5 no egg, Digi-Egg via category, limites de cópia"},
+      {id:"t14", t:"Estatísticas do deck (v0.14)", d:"Curva de custo, cores, level/category/type, exportar/importar"},
+    ]
+  },
+  {
+    id:"b4", idx:"04", title:"Coleção e polimento", ver:"v0.15 – v0.18",
+    desc:"Coleção pessoal, offline e distribuição",
+    tasks:[
+      {id:"t15", t:"Perfil e coleção pessoal (v0.15)", d:"Cartas possuídas, wishlist, cálculo do que falta"},
+      {id:"t16", t:"Offline e sincronização (v0.16)", d:"Uso pleno offline, sync incremental, resolução de conflitos"},
+      {id:"t17", t:"Performance, acessibilidade e i18n (v0.17)", d:"Memória/imagens, dark mode, PT/EN, testes em devices baixo custo"},
+      {id:"t18", t:"QA e distribuição (v0.18)", d:"Telemetria, crash reporting, builds TestFlight / Play Internal, onboarding"},
+    ]
+  },
+];
+
+const STORE_KEY = "digimon-tcg-milestones-v1";
+let state = {};
+
+async function loadState(){
+  try{
+    const r = await window.storage.get(STORE_KEY);
+    if(r && r.value) state = JSON.parse(r.value);
+  }catch(e){ state = {}; }
+}
+let saveTimer;
+async function saveState(){
+  try{
+    await window.storage.set(STORE_KEY, JSON.stringify(state));
+    const h = document.getElementById("saveHint");
+    h.classList.add("show");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>h.classList.remove("show"), 1400);
+  }catch(e){}
+}
+
+const allTaskIds = DATA.flatMap(b=>b.tasks.map(t=>t.id));
+
+function isChecked(id){ return !!state[id]; }
+
+function render(){
+  const container = document.getElementById("blocks");
+  container.innerHTML = "";
+  DATA.forEach(block=>{
+    const total = block.tasks.length;
+    const done = block.tasks.filter(t=>isChecked(t.id)).length;
+    const allDone = done===total;
+    const open = state["__open_"+block.id];
+
+    const el = document.createElement("div");
+    el.className = "block" + (allDone?" done":"") + (open?" open":"");
+    el.innerHTML = `
+      <div class="block-head" data-block="${block.id}">
+        <span class="idx">${block.idx}</span>
+        <div class="block-title">
+          <h2>${block.title} <span class="ver">${block.ver}</span></h2>
+          <p>${block.desc}</p>
+        </div>
+        <div class="block-meta">
+          <div class="mini-bar"><i style="width:${total?done/total*100:0}%"></i></div>
+          <span class="mini-count">${done}/${total}</span>
+          <span class="chev">›</span>
+        </div>
+      </div>
+      <div class="tasks" ${open?'style="max-height:600px"':''}>
+        <div class="tasks-inner">
+          ${block.tasks.map(t=>`
+            <div class="task ${isChecked(t.id)?"checked":""}" data-task="${t.id}">
+              <span class="cbox"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div class="task-body"><div class="t">${t.t}</div><div class="d">${t.d}</div></div>
+            </div>`).join("")}
+        </div>
+      </div>`;
+    container.appendChild(el);
+  });
+  bindEvents();
+  updateSummary();
+}
+
+function bindEvents(){
+  document.querySelectorAll(".block-head").forEach(h=>{
+    h.onclick = ()=>{
+      const id = h.dataset.block;
+      state["__open_"+id] = !state["__open_"+id];
+      saveState(); render();
+    };
+  });
+  document.querySelectorAll(".task").forEach(tk=>{
+    tk.onclick = ()=>{
+      const id = tk.dataset.task;
+      state[id] = !state[id];
+      saveState(); render();
+    };
+  });
+}
+
+function updateSummary(){
+  const done = allTaskIds.filter(isChecked).length;
+  const total = allTaskIds.length;
+  const pct = total? Math.round(done/total*100):0;
+  document.getElementById("doneTasks").textContent = done;
+  document.getElementById("totalTasks").textContent = total;
+  document.getElementById("pctNum").textContent = pct;
+
+  const ladder = document.getElementById("ladder");
+  ladder.innerHTML = "";
+  const segs = 20;
+  const on = Math.round(pct/100*segs);
+  for(let i=0;i<segs;i++){
+    const s = document.createElement("div");
+    s.className = "seg" + (i<on?" on":"");
+    ladder.appendChild(s);
+  }
+
+  const beta = document.getElementById("betaMarker");
+  if(done===total && total>0){ beta.classList.add("reached"); }
+  else{ beta.classList.remove("reached"); }
+}
+
+document.getElementById("resetBtn").onclick = async ()=>{
+  state = {};
+  await saveState();
+  render();
+};
+
+(async function init(){
+  await loadState();
+  document.getElementById("totalTasks").textContent = allTaskIds.length;
+  render();
+})();
+</script>
+</body>
+</html>
