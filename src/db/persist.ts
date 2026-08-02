@@ -1,6 +1,7 @@
 import type { NormalizedDataset } from '@/api/normalize';
 
 import type { Database } from './client';
+import { cardFts } from './fts';
 import { DATASET_VERSION_KEY } from './meta';
 import {
   card,
@@ -58,6 +59,7 @@ export function persistDataset(
     tx.delete(color).run();
     tx.delete(keyword).run();
     tx.delete(type).run();
+    tx.delete(cardFts).run();
 
     // 2. Tabelas de referência → mapas nome→id.
     const colorMap = new Map<string, number>();
@@ -152,7 +154,38 @@ export function persistDataset(
       tx.insert(linkDetail).values(rows).run();
     }
 
-    // 7. Versão do dataset.
+    // 7. Índice full-text (agrega keywords/types por carta).
+    const textByCard = (pairs: { cardNumber: string; value: string }[]) => {
+      const map = new Map<string, string[]>();
+      for (const { cardNumber, value } of pairs) {
+        const list = map.get(cardNumber) ?? [];
+        list.push(value);
+        map.set(cardNumber, list);
+      }
+      return map;
+    };
+    const keywordText = textByCard(
+      dataset.cardKeywords.map((x) => ({ cardNumber: x.cardNumber, value: x.keywordName })),
+    );
+    const typeText = textByCard(
+      dataset.cardTypes.map((x) => ({ cardNumber: x.cardNumber, value: x.typeName })),
+    );
+    const ftsRows = dataset.cards.map((c) => ({
+      cardId: cardId(c.number),
+      name: c.name,
+      attribute: c.attribute,
+      form: c.form,
+      effect: c.effect,
+      inheritedEffect: c.inheritedEffect,
+      securityEffect: c.securityEffect,
+      keywords: (keywordText.get(c.number) ?? []).join(' '),
+      types: (typeText.get(c.number) ?? []).join(' '),
+    }));
+    for (const rows of chunkByColumns(ftsRows, 9)) {
+      tx.insert(cardFts).values(rows).run();
+    }
+
+    // 8. Versão do dataset.
     tx.insert(meta)
       .values({ key: DATASET_VERSION_KEY, value: version })
       .onConflictDoUpdate({ target: meta.key, set: { value: version } })

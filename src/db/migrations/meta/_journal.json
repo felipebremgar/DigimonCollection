@@ -15,6 +15,13 @@
       "when": 1785698937913,
       "tag": "0001_noisy_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785704350911,
+      "tag": "0002_card_fts",
+      "breakpoints": true
     }
   ]
 }
