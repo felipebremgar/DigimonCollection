@@ -22,6 +22,13 @@
       "when": 1785704350911,
       "tag": "0002_card_fts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1785709493766,
+      "tag": "0003_filter_preset",
+      "breakpoints": true
     }
   ]
 }

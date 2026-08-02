@@ -71,6 +71,7 @@ export function CardDetailView({ detail }: { detail: CardDetail }) {
           source={{ uri: selected.artUrl }}
           contentFit="contain"
           transition={200}
+          priority="high"
           accessibilityLabel={`${card.name} (${card.number})`}
         />
       )}

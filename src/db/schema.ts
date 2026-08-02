@@ -207,6 +207,17 @@ export const meta = sqliteTable('meta', {
   value: text('value').notNull(),
 });
 
+// --- filter_preset: filtros favoritos salvos (Etapa 9) ---
+
+export const filterPreset = sqliteTable('filter_preset', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  payload: text('payload').notNull(), // JSON { filters, sort }
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
 // --- Relations (joins type-safe) ---
 
 export const cardRelations = relations(card, ({ many, one }) => ({
@@ -275,3 +286,4 @@ export type NewDeck = typeof deck.$inferInsert;
 export type DeckCard = typeof deckCard.$inferSelect;
 export type NewDeckCard = typeof deckCard.$inferInsert;
 export type Meta = typeof meta.$inferSelect;
+export type FilterPreset = typeof filterPreset.$inferSelect;

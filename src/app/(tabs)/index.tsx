@@ -6,7 +6,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useDatasetSync } from '@/db/use-dataset-sync';
 import { FilterSheet } from '@/features/library/filter-sheet';
-import { countActiveFilters, EMPTY_FILTERS, type LibraryFilters } from '@/features/library/filters';
+import {
+  countActiveFilters,
+  DEFAULT_SORT,
+  EMPTY_FILTERS,
+  type LibraryFilters,
+  type LibrarySort,
+} from '@/features/library/filters';
 import { LibraryGrid } from '@/features/library/library-grid';
 import { useFilterFacets } from '@/features/library/use-filter-facets';
 import { useLibraryQuery } from '@/features/library/use-library-query';
@@ -20,11 +26,12 @@ export default function LibraryScreen() {
 
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<LibraryFilters>(EMPTY_FILTERS);
+  const [sort, setSort] = useState<LibrarySort>(DEFAULT_SORT);
   const [filterOpen, setFilterOpen] = useState(false);
   const debouncedQuery = useDebouncedValue(query, 250);
 
   const facets = useFilterFacets(ready);
-  const library = useLibraryQuery(filters, debouncedQuery, ready);
+  const library = useLibraryQuery(filters, debouncedQuery, sort, ready);
 
   const items = library.data ?? [];
   const activeFilters = countActiveFilters(filters);
@@ -96,6 +103,8 @@ export default function LibraryScreen() {
         onClose={() => setFilterOpen(false)}
         filters={filters}
         onChange={setFilters}
+        sort={sort}
+        onSortChange={setSort}
         facets={facets.data}
         resultCount={items.length}
       />

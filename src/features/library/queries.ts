@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, like, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, like, or, type SQL, sql } from 'drizzle-orm';
 
 import type { Database } from '@/db/client';
 import { cardFts, toFtsQuery } from '@/db/fts';
@@ -15,7 +15,7 @@ import {
   type ColorName,
 } from '@/db/schema';
 
-import type { LibraryFilters } from './filters';
+import type { LibraryFilters, LibrarySort } from './filters';
 
 /** Uma entrada da biblioteca: uma impressão (arte) com dados da carta base. */
 export interface LibraryItem {
@@ -67,12 +67,41 @@ function cardIdsWithKeyword(db: Database, names: string[]) {
     .where(inArray(keyword.name, names));
 }
 
+/** Ordem canônica de raridade (C < U < R < SR < UR < SEC < P). */
+const RARITY_ORDER = sql`CASE ${printing.rarity}
+  WHEN 'C' THEN 0 WHEN 'U' THEN 1 WHEN 'R' THEN 2 WHEN 'SR' THEN 3
+  WHEN 'UR' THEN 4 WHEN 'SEC' THEN 5 WHEN 'P' THEN 6 ELSE 99 END`;
+
+function orderByFor(sort: LibrarySort): SQL[] {
+  const dir = sort.dir === 'desc' ? desc : asc;
+  const tiebreak = [asc(card.number), asc(printing.isAltArt), asc(printing.id)];
+  switch (sort.key) {
+    case 'level':
+      return [dir(card.level), ...tiebreak];
+    case 'dp':
+      return [dir(card.dp), ...tiebreak];
+    case 'playCost':
+      return [dir(card.playCost), ...tiebreak];
+    case 'rarity':
+      return [dir(RARITY_ORDER), ...tiebreak];
+    case 'number':
+    default:
+      return [dir(card.number), asc(printing.isAltArt), asc(printing.id)];
+  }
+}
+
 /**
- * Query unificada da biblioteca: aplica a busca full-text (FTS5) e os filtros
- * combináveis, retornando as impressões que casam. Facetas em AND; OR dentro
- * de cada faceta. `search` vazio ignora o FTS; sem filtros lista tudo.
+ * Query unificada da biblioteca: aplica a busca full-text (FTS5), os filtros
+ * combináveis e a ordenação, retornando as impressões que casam. Facetas em
+ * AND; OR dentro de cada faceta. `search` vazio ignora o FTS; sem filtros
+ * lista tudo.
  */
-export function queryLibrary(db: Database, filters: LibraryFilters, search: string): LibraryItem[] {
+export function queryLibrary(
+  db: Database,
+  filters: LibraryFilters,
+  search: string,
+  sort: LibrarySort,
+): LibraryItem[] {
   const conditions: (SQL | undefined)[] = [];
 
   if (filters.categories.length) {
@@ -83,6 +112,15 @@ export function queryLibrary(db: Database, filters: LibraryFilters, search: stri
   if (filters.levels.length) conditions.push(inArray(card.level, filters.levels));
   if (filters.forms.length) conditions.push(inArray(card.form, filters.forms));
   if (filters.attributes.length) conditions.push(inArray(card.attribute, filters.attributes));
+  if (filters.playCosts.length) {
+    conditions.push(inArray(card.playCost, filters.playCosts.map(Number)));
+  }
+  if (filters.digivolveCosts.length) {
+    conditions.push(inArray(card.digivolutionCost, filters.digivolveCosts.map(Number)));
+  }
+  if (filters.useCosts.length) {
+    conditions.push(inArray(card.useCost, filters.useCosts.map(Number)));
+  }
   if (filters.versions.length) {
     conditions.push(or(...filters.versions.map((v) => like(printing.version, `%${v}%`))));
   }
@@ -113,7 +151,7 @@ export function queryLibrary(db: Database, filters: LibraryFilters, search: stri
   const active = conditions.filter((c): c is SQL => c != null);
   if (active.length) query = query.where(and(...active));
 
-  return query.orderBy(asc(card.number), asc(printing.isAltArt), asc(printing.id)).all();
+  return query.orderBy(...orderByFor(sort)).all();
 }
 
 // --- Facetas disponíveis (para popular a UI de filtros) ---
@@ -126,10 +164,22 @@ export interface FilterFacets {
   attributes: string[];
   types: string[];
   keywords: string[];
+  playCosts: string[];
+  digivolveCosts: string[];
+  useCosts: string[];
 }
 
 function distinctValues(rows: { v: string | null }[]): string[] {
   return rows.map((r) => r.v).filter((v): v is string => v != null && v !== '' && v !== '-');
+}
+
+/** Custos distintos (inteiros), ordenados numericamente, como strings. */
+function distinctCosts(rows: { v: number | null }[]): string[] {
+  return rows
+    .map((r) => r.v)
+    .filter((v): v is number => v != null)
+    .sort((a, b) => a - b)
+    .map(String);
 }
 
 /** Valores distintos presentes no dataset, para montar os seletores. */
@@ -156,5 +206,8 @@ export function getFilterFacets(db: Database): FilterFacets {
     keywords: distinctValues(
       db.selectDistinct({ v: keyword.name }).from(keyword).orderBy(asc(keyword.name)).all(),
     ),
+    playCosts: distinctCosts(db.selectDistinct({ v: card.playCost }).from(card).all()),
+    digivolveCosts: distinctCosts(db.selectDistinct({ v: card.digivolutionCost }).from(card).all()),
+    useCosts: distinctCosts(db.selectDistinct({ v: card.useCost }).from(card).all()),
   };
 }

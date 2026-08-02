@@ -26,6 +26,11 @@ function LibraryCardComponent({ item }: { item: LibraryItem }) {
           contentFit="cover"
           transition={200}
           recyclingKey={String(item.printingId)}
+          // Sem thumbnail no servidor: o expo-image decodifica no tamanho da
+          // célula (downscaling) e cacheia em memória+disco — a arte cheia fica
+          // só no detalhe. priority baixa: muitas imagens competindo no scroll.
+          cachePolicy="memory-disk"
+          priority="low"
           accessibilityLabel={`${item.name} (${item.number})`}
         />
         {item.isAltArt && (
