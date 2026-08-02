@@ -23,6 +23,7 @@ export interface DeckCardItem {
   number: string;
   name: string;
   category: string;
+  copyLimit: number;
   artUrl: string;
 }
 
@@ -82,6 +83,7 @@ export function getDeckCards(db: Database, deckId: number): DeckCardItem[] {
       number: card.number,
       name: card.name,
       category: card.category,
+      copyLimit: card.copyLimit,
       artUrl: normalArt,
     })
     .from(deckCard)

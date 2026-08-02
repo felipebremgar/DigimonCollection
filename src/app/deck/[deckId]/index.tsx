@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput,
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { EGG_DECK_MAX, MAIN_DECK_SIZE, type DeckCardItem } from '@/features/deck-builder/deck-queries';
+import { validateDeck } from '@/features/deck-builder/deck-validation';
 import { useDeck } from '@/features/deck-builder/use-deck';
 import { useDecks } from '@/features/deck-builder/use-decks';
 import { useTheme } from '@/hooks/use-theme';
@@ -69,6 +70,8 @@ export default function DeckScreen() {
   const [name, setName] = useState<string | null>(null);
   const value = name ?? deck.data?.deck.name ?? '';
 
+  const validation = deck.data ? validateDeck(deck.data) : null;
+
   const confirmDelete = () => {
     Alert.alert('Excluir deck', 'Excluir este deck?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -123,6 +126,23 @@ export default function DeckScreen() {
             </Pressable>
           </Link>
 
+          {validation && (
+            <View
+              style={[
+                styles.validation,
+                { backgroundColor: validation.valid ? 'rgba(58,160,106,0.18)' : 'rgba(201,119,58,0.18)' },
+              ]}>
+              <ThemedText type="smallBold" style={{ color: validation.valid ? '#3aa06a' : '#c9773a' }}>
+                {validation.valid ? '✓ Deck válido' : '⚠ Deck inválido'}
+              </ThemedText>
+              {validation.errors.map((error) => (
+                <ThemedText key={error} type="small" themeColor="textSecondary">
+                  • {error}
+                </ThemedText>
+              ))}
+            </View>
+          )}
+
           <Zone title="Deck principal" count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
           <Zone title="Digi-Egg" count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
 
@@ -143,6 +163,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 20 },
   name: { height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17, fontWeight: '600' },
   addButton: { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  validation: { padding: 12, borderRadius: 10, gap: 4 },
   zone: { gap: 8 },
   zoneHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
