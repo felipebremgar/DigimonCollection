@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
@@ -49,7 +49,7 @@ function Zone({
       </View>
       {cards.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Nenhuma carta ainda — adicione pela biblioteca.
+          Nenhuma carta ainda — toque em “Adicionar cartas”.
         </ThemedText>
       ) : (
         cards.map((c) => <DeckCardRow key={c.deckCardId} item={c} />)
@@ -115,6 +115,14 @@ export default function DeckScreen() {
             placeholderTextColor={theme.textSecondary}
           />
 
+          <Link href={{ pathname: '/deck/[deckId]/add', params: { deckId: id } }} asChild>
+            <Pressable style={[styles.addButton, { backgroundColor: theme.text }]}>
+              <ThemedText type="smallBold" style={{ color: theme.background }}>
+                Adicionar cartas
+              </ThemedText>
+            </Pressable>
+          </Link>
+
           <Zone title="Deck principal" count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
           <Zone title="Digi-Egg" count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
 
@@ -134,6 +142,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   content: { padding: 16, gap: 20 },
   name: { height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17, fontWeight: '600' },
+  addButton: { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   zone: { gap: 8 },
   zoneHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
