@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
+import { Link } from 'expo-router';
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 
@@ -14,22 +15,26 @@ const PLACEHOLDER = { blurhash: 'L1O|b2~q00_3~qofofof00ayofj[' };
 
 function LibraryCardComponent({ item }: { item: LibraryItem }) {
   return (
-    <View style={styles.container}>
-      <Image
-        style={styles.image}
-        source={{ uri: item.artUrl }}
-        placeholder={PLACEHOLDER}
-        contentFit="cover"
-        transition={200}
-        recyclingKey={String(item.printingId)}
-        accessibilityLabel={`${item.name} (${item.number})`}
-      />
-      {item.isAltArt && (
-        <View style={styles.badge}>
-          <ThemedText style={styles.badgeText}>★</ThemedText>
-        </View>
-      )}
-    </View>
+    <Link
+      href={{ pathname: '/card/[printingId]', params: { printingId: item.printingId } }}
+      asChild>
+      <Pressable style={styles.container}>
+        <Image
+          style={styles.image}
+          source={{ uri: item.artUrl }}
+          placeholder={PLACEHOLDER}
+          contentFit="cover"
+          transition={200}
+          recyclingKey={String(item.printingId)}
+          accessibilityLabel={`${item.name} (${item.number})`}
+        />
+        {item.isAltArt && (
+          <View style={styles.badge}>
+            <ThemedText style={styles.badgeText}>★</ThemedText>
+          </View>
+        )}
+      </Pressable>
+    </Link>
   );
 }
 
