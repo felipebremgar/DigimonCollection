@@ -15,24 +15,31 @@ import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlit
 export const CARD_CATEGORIES = ['Digimon', 'Tamer', 'Option', 'Digi-Egg', 'Dual'] as const;
 export type CardCategory = (typeof CARD_CATEGORIES)[number];
 
+// Raridades canônicas. Guardadas como texto livre em `printing.rarity`
+// porque o dataset real também traz "-" (cartas sem raridade).
 export const RARITIES = ['C', 'U', 'R', 'SR', 'UR', 'SEC', 'P'] as const;
 export type Rarity = (typeof RARITIES)[number];
 
+// Versões canônicas usadas nos filtros. `printing.version` é texto livre:
+// as artes alternativas do dataset trazem centenas de rótulos compostos
+// (ex. "Foil - Championship Stamp - Full Art").
 export const VERSIONS = [
   'Normal',
-  'Arte Alternativa',
+  'Alternative Art',
   'Foil',
   'Textured',
-  'Pre-Release',
+  'Pre Release',
   'Box Topper',
   'Full Art',
   'Stamp',
-  'SP',
-  'RP',
+  'Special Rare',
+  'Rare Pull',
 ] as const;
 export type Version = (typeof VERSIONS)[number];
 
-export const COLORS = ['Vermelho', 'Azul', 'Amarelo', 'Verde', 'Preto', 'Roxo', 'Branco'] as const;
+// Cores canônicas em inglês (fonte de dados é em inglês; tradução para
+// exibição fica na i18n — Etapa 17).
+export const COLORS = ['Red', 'Blue', 'Yellow', 'Green', 'Black', 'Purple', 'White'] as const;
 export type ColorName = (typeof COLORS)[number];
 
 export const DECK_ZONES = ['main', 'egg'] as const;
@@ -78,8 +85,8 @@ export const printing = sqliteTable(
     cardId: integer('card_id')
       .notNull()
       .references(() => card.id, { onDelete: 'cascade' }),
-    rarity: text('rarity', { enum: RARITIES }).notNull(),
-    version: text('version', { enum: VERSIONS }).notNull(),
+    rarity: text('rarity').notNull(), // valor canônico de RARITIES, "-" ou outros
+    version: text('version').notNull(), // "Normal" ou o rótulo da arte alternativa
     isAltArt: integer('is_alt_art', { mode: 'boolean' }).notNull().default(false),
     artUrl: text('art_url').notNull(),
     illustrator: text('illustrator'), // sobrepõe card.illustrator quando a arte difere
