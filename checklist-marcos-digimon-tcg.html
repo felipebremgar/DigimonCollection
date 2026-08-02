@@ -140,6 +140,44 @@
   .beta-text h3{font-size:16px;font-weight:600;margin-bottom:2px}
   .beta-text p{font-size:13px;color:var(--ink-2)}
 
+  /* Post-beta / future extension */
+  .future{margin-top:28px}
+  .future-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .future-head .line{flex:1;height:1px;background:var(--line)}
+  .future-head .tag{
+    font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:4px 12px;
+  }
+  .future-block{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;position:relative;
+  }
+  .future-block::before{
+    content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;
+    background:var(--amber);border-radius:2px;opacity:.5;
+  }
+  .future-block h3{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .future-block h3 .pill{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--amber);
+    border:1px solid rgba(245,166,35,.35);border-radius:20px;padding:2px 8px;
+  }
+  .future-block .lead{font-size:13.5px;color:var(--ink-2);margin-bottom:16px}
+  .schema{
+    font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--bg);
+    border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;
+    line-height:1.7;white-space:pre;margin-bottom:16px;
+  }
+  .schema .k{color:var(--cyan)}
+  .schema .c{color:var(--ink-3)}
+  .future-notes{display:grid;gap:8px}
+  .fnote{display:flex;gap:10px;font-size:13px;color:var(--ink-2);align-items:flex-start}
+  .fnote .m{color:var(--amber);font-family:var(--mono);flex-shrink:0;margin-top:1px}
+  .fnote b{color:var(--ink);font-weight:500}
+  .fnote code, .future-block .lead code{
+    font-family:var(--mono);font-size:12px;color:var(--cyan);
+    background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+  }
+
   /* Footer controls */
   .foot{margin-top:34px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
   .legend{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.03em}
@@ -188,6 +226,36 @@
     <div class="beta-text">
       <h3>Publicação do beta</h3>
       <p>Biblioteca, busca, filtros e deck builder completos e validados, distribuídos via TestFlight e Google Play Internal.</p>
+    </div>
+  </div>
+
+  <div class="future">
+    <div class="future-head">
+      <span class="line"></span>
+      <span class="tag">Pós-beta · fora do escopo v1.0</span>
+      <span class="line"></span>
+    </div>
+    <div class="future-block">
+      <h3>Integração de preços <span class="pill">EXTENSÃO FUTURA</span></h3>
+      <p class="lead">Documentado para quando a equipe chegar nesta fase. As tabelas nascem numa migration futura ancorada em <code>printing</code> — sem tocar em nada do que já existe. Não conta para o progresso do beta.</p>
+      <div class="schema"><span class="k">store</span>  (id PK,
+        name TEXT NOT NULL,
+        base_url TEXT,
+        currency TEXT)            <span class="c">-- BRL, USD...</span>
+
+<span class="k">price</span>  (id PK,
+        store_id    FK → store,
+        printing_id FK → printing,
+        amount INT NOT NULL,      <span class="c">-- em CENTAVOS (evita float)</span>
+        link TEXT,                <span class="c">-- URL do produto na loja</span>
+        fetched_at TIMESTAMP)     <span class="c">-- quando foi capturado</span></div>
+      <div class="future-notes">
+        <div class="fnote"><span class="m">01</span><span>Preço vinculado à <b>printing</b>, não à card — cada arte carrega seu próprio valor por loja.</span></div>
+        <div class="fnote"><span class="m">02</span><span><b>amount em centavos</b> (INT) e <b>fetched_at</b> para robustez: sem erro de float e com controle de preço velho.</span></div>
+        <div class="fnote"><span class="m">03</span><span>Custo zero para adiar: <code>printing.id</code> já é estável — a FK conecta na migration futura.</span></div>
+        <div class="fnote"><span class="m">04</span><span>O trabalho real é o <b>matching</b>: mapear o produto de cada loja à printing (as lojas usam códigos próprios).</span></div>
+        <div class="fnote"><span class="m">05</span><span>Preparação barata no código: contrato <code>PriceProvider</code> + módulo <code>pricing/</code> isolado.</span></div>
+      </div>
     </div>
   </div>
 

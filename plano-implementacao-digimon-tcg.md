@@ -11,6 +11,7 @@ Aplicativo mobile (Android + iOS) de biblioteca de cartas do Digimon Card Game, 
 - [Stack tecnológica](#stack-tecnológica)
 - [Decisão de arquitetura central](#decisão-de-arquitetura-central)
 - [Modelagem de dados](#modelagem-de-dados)
+- [Extensão futura — preços](#extensão-futura--preços)
 - [Plano por blocos de versão](#plano-por-blocos-de-versão)
 - [Regras de negócio consolidadas](#regras-de-negócio-consolidadas)
 
@@ -149,9 +150,44 @@ card ─┬─< card_color      >─ color
       ├─< card_keyword     >─ keyword
       ├─< card_type_link   >─ type
       ├─── link_detail (1:1 opcional) ──> type
-      ├─< printing
+      ├─< printing ──< price >── store      (extensão futura — ver abaixo)
       └─< deck_card >── deck
 ```
+
+---
+
+## Extensão futura — preços
+
+> **Fora do escopo do v1.0 beta.** Esta seção documenta a modelagem de preços para quando a equipe chegar nessa fase. Nenhuma tabela aqui precisa ser criada agora — todas nascem numa migration futura ancorada em `printing`, sem tocar nas tabelas existentes (`card`, `printing`, deck, busca).
+
+O preço é vinculado à **impressão** (`printing`), não à carta base: uma arte alternativa foil vale diferente da normal, então cada `printing` carrega seu próprio preço por loja.
+
+```
+store  (id PK,
+        name TEXT NOT NULL,
+        base_url TEXT,
+        currency TEXT)            -- BRL, USD...
+
+price  (id PK,
+        store_id    FK → store,
+        printing_id FK → printing,
+        amount INT NOT NULL,      -- em CENTAVOS (evita erro de float)
+        link TEXT,                -- URL do produto na loja
+        fetched_at TIMESTAMP)     -- quando o preço foi capturado
+```
+
+Duas decisões de robustez embutidas:
+
+- **`amount` em centavos (INT)** — dinheiro em float acumula erro de arredondamento. Guarda-se `1299` para R$ 12,99 e formata-se na exibição.
+- **`fetched_at`** — permite identificar preços velhos e decidir quando rebuscar.
+
+**Consulta de preço:** join direto `printing → price → store`, filtrando pela printing e ordenando por `amount`. Como o vínculo é na printing, cada arte carrega seu próprio preço.
+
+**Por que não custa nada adiar:** `printing.id` já existe e é estável. As tabelas `store` e `price` se conectam a ele numa migration futura sem alterar nada do que já existe.
+
+**O trabalho real da fase de preços é o matching:** as lojas identificam produtos por códigos próprios, não pela numeração do TCG. Descobrir qual produto de cada loja corresponde a cada `printing` é o esforço central. Se uma loja expõe um identificador estável para reconsulta, adiciona-se uma coluna `external_id TEXT` em `price` nessa fase — não antes.
+
+**Preparação recomendada no código (barata, sem implementação):** definir um contrato único `PriceProvider` (`search(printing) → Price[]`) que qualquer loja implementa, e reservar um módulo `pricing/` isolado. Isso evita que o código de preço nasça acoplado à primeira loja integrada.
 
 ---
 
