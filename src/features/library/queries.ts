@@ -28,6 +28,7 @@ export interface LibraryItem {
   version: string;
   isAltArt: boolean;
   category: string;
+  copyLimit: number;
 }
 
 const libraryColumns = {
@@ -40,6 +41,7 @@ const libraryColumns = {
   version: printing.version,
   isAltArt: printing.isAltArt,
   category: card.category,
+  copyLimit: card.copyLimit,
 };
 
 /** Subquery: ids de cartas que têm QUALQUER valor selecionado no N:N. */

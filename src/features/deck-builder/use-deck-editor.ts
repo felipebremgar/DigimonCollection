@@ -26,8 +26,9 @@ export function useDeckEditor(deckId: number) {
   return {
     counts: counts.data ?? {},
     add: (item: LibraryItem) => {
-      addCardToDeck(db, deckId, item.cardId, item.printingId, item.category);
-      invalidate();
+      const result = addCardToDeck(db, deckId, item.cardId, item.printingId, item.category);
+      if (result.added) invalidate();
+      return result;
     },
     remove: (item: LibraryItem) => {
       removeCardFromDeck(db, deckId, item.cardId, item.category);

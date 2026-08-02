@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -33,16 +33,38 @@ export default function AddCardsScreen() {
   const library = useLibraryQuery(EMPTY_FILTERS, debouncedQuery, DEFAULT_SORT, ready);
   const items = library.data ?? [];
 
+  const [notice, setNotice] = useState<string | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showNotice = useCallback((message: string) => {
+    setNotice(message);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 2200);
+  }, []);
+
+  const addCard = useCallback(
+    (item: LibraryItem) => {
+      const result = editor.add(item);
+      if (!result.added) {
+        showNotice(
+          result.limit === 0
+            ? `${item.name} é banida (0 cópias).`
+            : `Limite de ${result.limit} cópia(s) atingido: ${item.name}.`,
+        );
+      }
+    },
+    [editor, showNotice],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: LibraryItem }) => (
       <DeckAddCard
         item={item}
         count={editor.counts[item.cardId] ?? 0}
-        onAdd={() => editor.add(item)}
+        onAdd={() => addCard(item)}
         onRemove={() => editor.remove(item)}
       />
     ),
-    [editor],
+    [editor, addCard],
   );
 
   const mainCount = deck.data?.mainCount ?? 0;
@@ -60,6 +82,14 @@ export default function AddCardsScreen() {
           Digi-Egg {eggCount}/{EGG_DECK_MAX}
         </ThemedText>
       </ThemedView>
+
+      {notice && (
+        <View style={styles.notice}>
+          <ThemedText type="small" style={styles.noticeText}>
+            {notice}
+          </ThemedText>
+        </View>
+      )}
 
       <View style={styles.searchWrap}>
         <TextInput
@@ -107,6 +137,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 10,
   },
+  notice: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(224,160,60,0.22)',
+  },
+  noticeText: { color: '#c9773a' },
   searchWrap: { paddingHorizontal: 12, paddingVertical: 8 },
   search: { height: 40, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 },
   grid: { padding: 4 },

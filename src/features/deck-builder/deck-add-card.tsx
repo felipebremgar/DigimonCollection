@@ -15,6 +15,9 @@ interface DeckAddCardProps {
 }
 
 function DeckAddCardComponent({ item, count, onAdd, onRemove }: DeckAddCardProps) {
+  const banned = item.copyLimit === 0;
+  const maxed = count >= item.copyLimit;
+
   return (
     <Pressable style={styles.container} onPress={onAdd}>
       <Image
@@ -28,15 +31,22 @@ function DeckAddCardComponent({ item, count, onAdd, onRemove }: DeckAddCardProps
         priority="low"
         accessibilityLabel={`${item.name} (${item.number})`}
       />
+      {banned && (
+        <View style={styles.bannedBadge}>
+          <ThemedText style={styles.bannedText}>Banida</ThemedText>
+        </View>
+      )}
       {count > 0 && (
         <View style={styles.overlay}>
           <Pressable style={styles.stepButton} onPress={onRemove} hitSlop={6}>
             <ThemedText style={styles.stepText}>−</ThemedText>
           </Pressable>
-          <View style={styles.countPill}>
-            <ThemedText style={styles.countText}>{count}</ThemedText>
+          <View style={[styles.countPill, maxed && styles.countPillMaxed]}>
+            <ThemedText style={styles.countText}>
+              {count}/{item.copyLimit}
+            </ThemedText>
           </View>
-          <View style={styles.stepButton}>
+          <View style={[styles.stepButton, maxed && styles.stepDisabled]}>
             <ThemedText style={styles.stepText}>+</ThemedText>
           </View>
         </View>
@@ -78,6 +88,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.18)',
   },
   stepText: { color: '#fff', fontSize: 15, lineHeight: 17 },
-  countPill: { paddingHorizontal: 8 },
-  countText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  stepDisabled: { opacity: 0.35 },
+  countPill: { paddingHorizontal: 8, borderRadius: 8 },
+  countPillMaxed: { backgroundColor: 'rgba(224,160,60,0.9)' },
+  countText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  bannedBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(200,60,60,0.9)',
+  },
+  bannedText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });

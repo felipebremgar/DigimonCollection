@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 
 import type { Database } from '@/db/client';
-import { deck, deckCard, type DeckZone } from '@/db/schema';
+import { card, deck, deckCard, type DeckZone } from '@/db/schema';
 
 /** Digi-Egg vai para o egg deck; todo o resto para o main. */
 export function zoneForCategory(category: string): DeckZone {
@@ -20,10 +20,20 @@ function findRow(db: Database, deckId: number, cardId: number, zone: DeckZone) {
     .get();
 }
 
+export interface AddResult {
+  /** false = bloqueado pelo limite de cópias (copy_limit). */
+  added: boolean;
+  /** limite de cópias da carta (0 banida, 1 limitada, 4 padrão...). */
+  limit: number;
+  /** cópias da carta no deck após a operação. */
+  count: number;
+}
+
 /**
- * Adiciona uma cópia da carta ao deck. As cópias são agregadas por carta
- * (uma linha por card+zona), então artes diferentes da mesma numeração somam
- * na mesma contagem. A zona vem da categoria.
+ * Adiciona uma cópia da carta ao deck, respeitando o `copy_limit` (Etapa 12).
+ * As cópias são agregadas por carta (uma linha por card+zona), então artes
+ * diferentes da mesma numeração somam na mesma contagem. A zona vem da
+ * categoria. Retorna se adicionou e a contagem/limite para feedback na UI.
  */
 export function addCardToDeck(
   db: Database,
@@ -31,18 +41,32 @@ export function addCardToDeck(
   cardId: number,
   printingId: number | null,
   category: string,
-): void {
+): AddResult {
   const zone = zoneForCategory(category);
   const existing = findRow(db, deckId, cardId, zone);
+  const current = existing?.quantity ?? 0;
+
+  const cardRow = db
+    .select({ copyLimit: card.copyLimit })
+    .from(card)
+    .where(eq(card.id, cardId))
+    .get();
+  const limit = cardRow?.copyLimit ?? 4;
+
+  if (current >= limit) {
+    return { added: false, limit, count: current };
+  }
+
   if (existing) {
     db.update(deckCard)
-      .set({ quantity: existing.quantity + 1 })
+      .set({ quantity: current + 1 })
       .where(eq(deckCard.id, existing.id))
       .run();
   } else {
     db.insert(deckCard).values({ deckId, cardId, printingId, zone, quantity: 1 }).run();
   }
   bumpDeck(db, deckId);
+  return { added: true, limit, count: current + 1 };
 }
 
 /** Remove uma cópia da carta (apaga a linha quando chega a zero). */
