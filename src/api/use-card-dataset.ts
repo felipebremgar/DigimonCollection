@@ -14,6 +14,6 @@ export const CARD_DATASET_QUERY_KEY = ['card-dataset'] as const;
 export function useCardDataset() {
   return useQuery<NormalizedDataset>({
     queryKey: CARD_DATASET_QUERY_KEY,
-    queryFn: async ({ signal }) => normalizeDataset(await fetchCardDataset(signal)),
+    queryFn: async ({ signal }) => normalizeDataset((await fetchCardDataset(signal)).cards),
   });
 }

@@ -200,6 +200,13 @@ export const deckCard = sqliteTable(
   ],
 );
 
+// --- meta: chave-valor para flags do app (ex. versão do dataset) ---
+
+export const meta = sqliteTable('meta', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});
+
 // --- Relations (joins type-safe) ---
 
 export const cardRelations = relations(card, ({ many, one }) => ({
@@ -267,3 +274,4 @@ export type Deck = typeof deck.$inferSelect;
 export type NewDeck = typeof deck.$inferInsert;
 export type DeckCard = typeof deckCard.$inferSelect;
 export type NewDeckCard = typeof deckCard.$inferInsert;
+export type Meta = typeof meta.$inferSelect;

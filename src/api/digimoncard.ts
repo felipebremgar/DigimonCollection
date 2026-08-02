@@ -63,11 +63,31 @@ export interface SourceCard {
   // Campos adicionais existem no JSON, mas não são usados na normalização.
 }
 
-/** Baixa o dataset completo de cartas do digimoncard.app. */
-export async function fetchCardDataset(signal?: AbortSignal): Promise<SourceCard[]> {
+/** Deriva a versão remota do dataset a partir dos headers da resposta. */
+function versionFromHeaders(headers: Headers): string {
+  return headers.get('etag') ?? headers.get('last-modified') ?? '';
+}
+
+/**
+ * Consulta a versão remota do dataset (ETag) sem baixá-lo, via HEAD.
+ * Usado para decidir se um novo sync é necessário (Etapa 4).
+ */
+export async function fetchDatasetVersion(signal?: AbortSignal): Promise<string> {
+  const response = await fetch(CARD_DATASET_URL, { method: 'HEAD', signal });
+  if (!response.ok) {
+    throw new Error(`Falha ao consultar a versão do dataset: HTTP ${response.status}`);
+  }
+  return versionFromHeaders(response.headers);
+}
+
+/** Baixa o dataset completo de cartas do digimoncard.app, com sua versão. */
+export async function fetchCardDataset(
+  signal?: AbortSignal,
+): Promise<{ cards: SourceCard[]; version: string }> {
   const response = await fetch(CARD_DATASET_URL, { signal });
   if (!response.ok) {
     throw new Error(`Falha ao baixar o dataset de cartas: HTTP ${response.status}`);
   }
-  return (await response.json()) as SourceCard[];
+  const cards = (await response.json()) as SourceCard[];
+  return { cards, version: versionFromHeaders(response.headers) };
 }

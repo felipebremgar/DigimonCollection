@@ -210,15 +210,21 @@ export function normalizeDataset(source: SourceCard[]): NormalizedDataset {
       });
     }
 
-    // Cores (multivalorado, filtrando glitches do dataset).
+    // Cores (multivalorado, filtrando glitches e repetições do dataset —
+    // ex. "Yellow/Yellow" — que violariam a PK composta de card_color).
+    const seenColors = new Set<string>();
     for (const colorName of splitSlash(src.color)) {
-      if (!VALID_COLORS.has(colorName)) continue;
+      if (!VALID_COLORS.has(colorName) || seenColors.has(colorName)) continue;
+      seenColors.add(colorName);
       colors.add(colorName);
       cardColors.push({ cardNumber: number, colorName });
     }
 
-    // Types do rodapé (multivalorado).
+    // Types do rodapé (multivalorado, sem repetição).
+    const seenTypes = new Set<string>();
     for (const typeName of splitSlash(src.type)) {
+      if (seenTypes.has(typeName)) continue;
+      seenTypes.add(typeName);
       types.add(typeName);
       cardTypes.push({ cardNumber: number, typeName });
     }
