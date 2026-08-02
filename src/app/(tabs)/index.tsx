@@ -1,51 +1,66 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useDatasetSync } from '@/db/use-dataset-sync';
+import { FilterSheet } from '@/features/library/filter-sheet';
+import { countActiveFilters, EMPTY_FILTERS, type LibraryFilters } from '@/features/library/filters';
 import { LibraryGrid } from '@/features/library/library-grid';
-import { useLibrary } from '@/features/library/use-library';
-import { useLibrarySearch } from '@/features/library/use-library-search';
+import { useFilterFacets } from '@/features/library/use-filter-facets';
+import { useLibraryQuery } from '@/features/library/use-library-query';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function LibraryScreen() {
   const theme = useTheme();
   const sync = useDatasetSync();
-  const library = useLibrary(sync.isSuccess);
+  const ready = sync.isSuccess;
 
   const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<LibraryFilters>(EMPTY_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
   const debouncedQuery = useDebouncedValue(query, 250);
-  const searching = debouncedQuery.trim().length > 0;
-  const search = useLibrarySearch(debouncedQuery, sync.isSuccess);
 
-  const items = searching ? (search.data ?? []) : (library.data ?? []);
-  const loading = sync.isPending || (sync.isSuccess && library.isPending);
+  const facets = useFilterFacets(ready);
+  const library = useLibraryQuery(filters, debouncedQuery, ready);
+
+  const items = library.data ?? [];
+  const activeFilters = countActiveFilters(filters);
+  const loading = sync.isPending || (ready && library.isPending);
+  const searchingOrFiltering = debouncedQuery.trim().length > 0 || activeFilters > 0;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.header}>
         <ThemedText type="subtitle">Biblioteca</ThemedText>
 
-        {sync.isSuccess && (
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Buscar por nome, efeito, keyword, type…"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.search, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-            autoCorrect={false}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-          />
-        )}
-
-        {sync.isSuccess && !loading && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {searching ? `${items.length} resultados` : `${items.length} impressões`}
-          </ThemedText>
+        {ready && (
+          <>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Buscar por nome, efeito, keyword, type…"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.search, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+              autoCorrect={false}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
+            <View style={styles.controls}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {items.length} {searchingOrFiltering ? 'resultados' : 'impressões'}
+              </ThemedText>
+              <Pressable
+                onPress={() => setFilterOpen(true)}
+                style={[styles.filterButton, { backgroundColor: theme.backgroundElement }]}>
+                <ThemedText type="smallBold">
+                  Filtros{activeFilters > 0 ? ` · ${activeFilters}` : ''}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </>
         )}
       </SafeAreaView>
 
@@ -66,15 +81,24 @@ export default function LibraryScreen() {
         </ThemedView>
       )}
 
-      {sync.isSuccess && !loading && searching && items.length === 0 && (
+      {ready && !loading && searchingOrFiltering && items.length === 0 && (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Nenhuma carta encontrada para “{debouncedQuery.trim()}”.
+            Nenhuma carta encontrada com esses critérios.
           </ThemedText>
         </ThemedView>
       )}
 
-      {sync.isSuccess && !loading && items.length > 0 && <LibraryGrid items={items} />}
+      {ready && !loading && items.length > 0 && <LibraryGrid items={items} />}
+
+      <FilterSheet
+        visible={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+        facets={facets.data}
+        resultCount={items.length}
+      />
     </ThemedView>
   );
 }
@@ -93,6 +117,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     fontSize: 15,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
   },
   center: {
     flex: 1,
