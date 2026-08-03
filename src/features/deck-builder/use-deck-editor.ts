@@ -20,6 +20,7 @@ export function useDeckEditor(deckId: number) {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['deck-counts', deckId] });
     queryClient.invalidateQueries({ queryKey: ['deck', deckId] });
+    queryClient.invalidateQueries({ queryKey: ['deck-stats', deckId] });
     queryClient.invalidateQueries({ queryKey: ['decks'] });
   };
 

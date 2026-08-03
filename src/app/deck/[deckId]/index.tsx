@@ -5,9 +5,13 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput,
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { deckToText } from '@/features/deck-builder/deck-export';
+import { DeckExportModal } from '@/features/deck-builder/deck-export-modal';
 import { EGG_DECK_MAX, MAIN_DECK_SIZE, type DeckCardItem } from '@/features/deck-builder/deck-queries';
+import { DeckStatsView } from '@/features/deck-builder/deck-stats-view';
 import { validateDeck } from '@/features/deck-builder/deck-validation';
 import { useDeck } from '@/features/deck-builder/use-deck';
+import { useDeckStats } from '@/features/deck-builder/use-deck-stats';
 import { useDecks } from '@/features/deck-builder/use-decks';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -68,9 +72,12 @@ export default function DeckScreen() {
   const decks = useDecks(false);
 
   const [name, setName] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const value = name ?? deck.data?.deck.name ?? '';
 
   const validation = deck.data ? validateDeck(deck.data) : null;
+  const hasCards = !!deck.data && deck.data.main.length + deck.data.egg.length > 0;
+  const stats = useDeckStats(id, hasCards);
 
   const confirmDelete = () => {
     Alert.alert('Excluir deck', 'Excluir este deck?', [
@@ -146,6 +153,16 @@ export default function DeckScreen() {
           <Zone title="Deck principal" count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
           <Zone title="Digi-Egg" count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
 
+          {hasCards && stats.data && <DeckStatsView stats={stats.data} />}
+
+          {hasCards && (
+            <Pressable
+              style={[styles.exportButton, { borderColor: theme.textSecondary }]}
+              onPress={() => setExportOpen(true)}>
+              <ThemedText type="smallBold">Exportar deck</ThemedText>
+            </Pressable>
+          )}
+
           <Pressable style={styles.deleteButton} onPress={confirmDelete}>
             <ThemedText type="smallBold" style={{ color: '#c9773a' }}>
               Excluir deck
@@ -153,6 +170,12 @@ export default function DeckScreen() {
           </Pressable>
         </ScrollView>
       )}
+
+      <DeckExportModal
+        visible={exportOpen}
+        onClose={() => setExportOpen(false)}
+        text={deck.data ? deckToText(deck.data) : ''}
+      />
     </ThemedView>
   );
 }
@@ -164,6 +187,13 @@ const styles = StyleSheet.create({
   name: { height: 44, borderRadius: 10, paddingHorizontal: 12, fontSize: 17, fontWeight: '600' },
   addButton: { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   validation: { padding: 12, borderRadius: 10, gap: 4 },
+  exportButton: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   zone: { gap: 8 },
   zoneHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
