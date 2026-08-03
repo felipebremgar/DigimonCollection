@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, TextInput,
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useDeckMissing } from '@/features/collection/use-deck-missing';
 import { deckToText } from '@/features/deck-builder/deck-export';
 import { DeckExportModal } from '@/features/deck-builder/deck-export-modal';
 import { EGG_DECK_MAX, MAIN_DECK_SIZE, type DeckCardItem } from '@/features/deck-builder/deck-queries';
@@ -78,6 +79,7 @@ export default function DeckScreen() {
   const validation = deck.data ? validateDeck(deck.data) : null;
   const hasCards = !!deck.data && deck.data.main.length + deck.data.egg.length > 0;
   const stats = useDeckStats(id, hasCards);
+  const missing = useDeckMissing(id, hasCards);
 
   const confirmDelete = () => {
     Alert.alert('Excluir deck', 'Excluir este deck?', [
@@ -152,6 +154,32 @@ export default function DeckScreen() {
 
           <Zone title="Deck principal" count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
           <Zone title="Digi-Egg" count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
+
+          {hasCards && missing.data && (
+            <View style={styles.zone}>
+              <ThemedText type="smallBold">O QUE FALTA (COLEÇÃO)</ThemedText>
+              {missing.data.length === 0 ? (
+                <ThemedText type="small" style={{ color: '#3aa06a' }}>
+                  ✓ Você já tem todas as cartas deste deck.
+                </ThemedText>
+              ) : (
+                missing.data.map((m) => (
+                  <View key={m.cardId} style={styles.cardRow}>
+                    <Image style={styles.thumb} source={{ uri: m.artUrl }} contentFit="cover" transition={100} />
+                    <View style={styles.cardInfo}>
+                      <ThemedText type="small">{m.name}</ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {m.number} · tem {m.owned}/{m.required}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="smallBold" style={{ color: '#c9773a' }}>
+                      faltam {m.missing}
+                    </ThemedText>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
 
           {hasCards && stats.data && <DeckStatsView stats={stats.data} />}
 

@@ -218,6 +218,16 @@ export const filterPreset = sqliteTable('filter_preset', {
     .default(sql`(unixepoch())`),
 });
 
+// --- collection: coleção pessoal por impressão (Etapa 15) ---
+
+export const collection = sqliteTable('collection', {
+  printingId: integer('printing_id')
+    .primaryKey()
+    .references(() => printing.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').notNull().default(0), // cópias possuídas desta arte
+  wishlist: integer('wishlist', { mode: 'boolean' }).notNull().default(false),
+});
+
 // --- Relations (joins type-safe) ---
 
 export const cardRelations = relations(card, ({ many, one }) => ({
@@ -287,3 +297,4 @@ export type DeckCard = typeof deckCard.$inferSelect;
 export type NewDeckCard = typeof deckCard.$inferInsert;
 export type Meta = typeof meta.$inferSelect;
 export type FilterPreset = typeof filterPreset.$inferSelect;
+export type Collection = typeof collection.$inferSelect;

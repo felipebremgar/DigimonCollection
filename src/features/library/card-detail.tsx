@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { CollectionControls } from '@/features/collection/collection-controls';
 
 import type { CardDetail, DetailPrinting } from './card-detail-queries';
 import { HighlightedEffect } from './highlighted-effect';
@@ -98,6 +99,12 @@ export function CardDetailView({ detail }: { detail: CardDetail }) {
           {selected ? ` · ${selected.version}` : ''}
         </ThemedText>
       </View>
+
+      {selected && (
+        <Section title="Coleção">
+          <CollectionControls printingId={selected.id} />
+        </Section>
+      )}
 
       <View style={styles.chipRow}>
         {detail.colors.map((c) => (

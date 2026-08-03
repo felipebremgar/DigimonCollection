@@ -29,6 +29,13 @@
       "when": 1785709493766,
       "tag": "0003_filter_preset",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1785717129223,
+      "tag": "0004_collection",
+      "breakpoints": true
     }
   ]
 }
