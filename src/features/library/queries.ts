@@ -69,10 +69,12 @@ function cardIdsWithKeyword(db: Database, names: string[]) {
     .where(inArray(keyword.name, names));
 }
 
-/** Ordem canônica de raridade (C < U < R < SR < UR < SEC < P). */
+/** Ordem canônica de raridade (C < U < R < SR < UR < SEC < P). Raridades
+ * desconhecidas ("-") recebem -1 para ficarem por último no desc (raros no
+ * topo) e antes das comuns no asc. */
 const RARITY_ORDER = sql`CASE ${printing.rarity}
   WHEN 'C' THEN 0 WHEN 'U' THEN 1 WHEN 'R' THEN 2 WHEN 'SR' THEN 3
-  WHEN 'UR' THEN 4 WHEN 'SEC' THEN 5 WHEN 'P' THEN 6 ELSE 99 END`;
+  WHEN 'UR' THEN 4 WHEN 'SEC' THEN 5 WHEN 'P' THEN 6 ELSE -1 END`;
 
 function orderByFor(sort: LibrarySort): SQL[] {
   const dir = sort.dir === 'desc' ? desc : asc;
