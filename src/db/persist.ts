@@ -1,3 +1,5 @@
+import { eq } from 'drizzle-orm';
+
 import type { NormalizedDataset } from '@/api/normalize';
 
 import type { Database } from './client';
@@ -8,22 +10,30 @@ import {
   cardColor,
   cardKeyword,
   cardTypeLink,
+  collection,
   color,
+  deckCard,
   keyword,
   linkDetail,
   meta,
   printing,
   type,
   type ColorName,
+  type DeckZone,
 } from './schema';
 
 /**
- * Grava o dataset normalizado no SQLite local (sync "puxa tudo" da Etapa 4).
+ * Grava o dataset normalizado no SQLite local (sync "puxa tudo").
  *
  * Roda numa transação: limpa os dados anteriores, insere as tabelas de
  * referência (cor/type/keyword) e as cartas com `.returning()` para resolver
  * as chaves naturais em IDs, e então grava printings, N:N, Link e a versão.
- * Idempotente: rodar de novo substitui todo o conteúdo.
+ * Idempotente: rodar de novo substitui todo o conteúdo do dataset.
+ *
+ * **Preserva os dados do usuário (Etapa 16):** decks e coleção são capturados
+ * por chave natural (numeração da carta / URL da arte) antes do rebuild e
+ * restaurados depois, resolvendo os novos IDs. Referências a cartas/artes que
+ * saíram do dataset são descartadas (dataset é a fonte da verdade).
  *
  * É **síncrona** de propósito: o driver `expo-sqlite` do Drizzle é síncrono
  * (`'sync'`), então a transação precisa concluir todo o trabalho antes de
@@ -49,7 +59,31 @@ export function persistDataset(
   version: string,
 ): void {
   database.transaction((tx) => {
+    // 0. Captura os dados do usuário por chave natural (antes de apagar).
+    const deckSnapshot = tx
+      .select({
+        deckId: deckCard.deckId,
+        cardNumber: card.number,
+        printingArt: printing.artUrl,
+        zone: deckCard.zone,
+        quantity: deckCard.quantity,
+      })
+      .from(deckCard)
+      .innerJoin(card, eq(card.id, deckCard.cardId))
+      .leftJoin(printing, eq(printing.id, deckCard.printingId))
+      .all();
+    const collectionSnapshot = tx
+      .select({
+        artUrl: printing.artUrl,
+        quantity: collection.quantity,
+        wishlist: collection.wishlist,
+      })
+      .from(collection)
+      .innerJoin(printing, eq(printing.id, collection.printingId))
+      .all();
+
     // 1. Limpa dados anteriores (ordem segura de FK; refs por último).
+    //    O cascade esvazia deck_card e collection — restaurados no fim (passo 9).
     tx.delete(cardColor).run();
     tx.delete(cardKeyword).run();
     tx.delete(cardTypeLink).run();
@@ -115,8 +149,14 @@ export function persistDataset(
       illustrator: p.illustrator,
       printingNotes: p.printingNotes,
     }));
+    const printingMap = new Map<string, number>(); // artUrl → novo id (p/ restauro)
     for (const rows of chunkByColumns(printingRows, 7)) {
-      tx.insert(printing).values(rows).run();
+      const ret = tx
+        .insert(printing)
+        .values(rows)
+        .returning({ id: printing.id, artUrl: printing.artUrl })
+        .all();
+      ret.forEach((r) => printingMap.set(r.artUrl, r.id));
     }
 
     // 5. N:N.
@@ -185,7 +225,47 @@ export function persistDataset(
       tx.insert(cardFts).values(rows).run();
     }
 
-    // 8. Versão do dataset.
+    // 9. Restaura os dados do usuário resolvendo os novos IDs; descarta as
+    //    referências a cartas/artes que saíram do dataset.
+    const restoredCollection: {
+      printingId: number;
+      quantity: number;
+      wishlist: boolean;
+    }[] = [];
+    for (const c of collectionSnapshot) {
+      const printingId = printingMap.get(c.artUrl);
+      if (printingId != null) {
+        restoredCollection.push({ printingId, quantity: c.quantity, wishlist: c.wishlist });
+      }
+    }
+    for (const rows of chunkByColumns(restoredCollection, 3)) {
+      tx.insert(collection).values(rows).run();
+    }
+
+    const restoredDeckCards: {
+      deckId: number;
+      cardId: number;
+      printingId: number | null;
+      zone: DeckZone;
+      quantity: number;
+    }[] = [];
+    for (const d of deckSnapshot) {
+      const resolvedCardId = cardMap.get(d.cardNumber);
+      if (resolvedCardId == null) continue;
+      const printingId = d.printingArt ? (printingMap.get(d.printingArt) ?? null) : null;
+      restoredDeckCards.push({
+        deckId: d.deckId,
+        cardId: resolvedCardId,
+        printingId,
+        zone: d.zone,
+        quantity: d.quantity,
+      });
+    }
+    for (const rows of chunkByColumns(restoredDeckCards, 5)) {
+      tx.insert(deckCard).values(rows).run();
+    }
+
+    // 10. Versão do dataset.
     tx.insert(meta)
       .values({ key: DATASET_VERSION_KEY, value: version })
       .onConflictDoUpdate({ target: meta.key, set: { value: version } })
