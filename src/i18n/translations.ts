@@ -130,6 +130,19 @@ const en: Dict = {
   'settings.themeSystem': 'System',
   'settings.themeLight': 'Light',
   'settings.themeDark': 'Dark',
+
+  'error.title': 'Something went wrong',
+  'error.message': 'An unexpected error occurred. You can try again.',
+  'error.retry': 'Try again',
+
+  'onboarding.welcome': 'Welcome to Digimon Collection',
+  'onboarding.start': "Let's go",
+  'onboarding.slide1.title': 'Browse the library',
+  'onboarding.slide1.body': 'Every card with instant search and combinable filters.',
+  'onboarding.slide2.title': 'Build decks',
+  'onboarding.slide2.body': 'Main deck of 50 + Digi-Egg, with copy rules and validation.',
+  'onboarding.slide3.title': 'Track your collection',
+  'onboarding.slide3.body': 'Mark owned cards and see what a deck is still missing.',
 };
 
 const pt: Dict = {
@@ -259,6 +272,19 @@ const pt: Dict = {
   'settings.themeSystem': 'Sistema',
   'settings.themeLight': 'Claro',
   'settings.themeDark': 'Escuro',
+
+  'error.title': 'Algo deu errado',
+  'error.message': 'Ocorreu um erro inesperado. Você pode tentar novamente.',
+  'error.retry': 'Tentar novamente',
+
+  'onboarding.welcome': 'Bem-vindo ao Digimon Collection',
+  'onboarding.start': 'Começar',
+  'onboarding.slide1.title': 'Navegue pela biblioteca',
+  'onboarding.slide1.body': 'Todas as cartas com busca instantânea e filtros combináveis.',
+  'onboarding.slide2.title': 'Monte decks',
+  'onboarding.slide2.body': 'Deck principal de 50 + Digi-Egg, com regras de cópia e validação.',
+  'onboarding.slide3.title': 'Acompanhe sua coleção',
+  'onboarding.slide3.body': 'Marque as cartas que possui e veja o que falta para um deck.',
 };
 
 export const translations: Record<Language, Dict> = { pt, en };

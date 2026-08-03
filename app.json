@@ -7,10 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "digimoncollection",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": { "policy": "appVersion" },
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.digimoncollection.app",
+      "supportsTablet": true
     },
     "android": {
+      "package": "com.digimoncollection.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
