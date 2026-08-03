@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function TabsLayout() {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -19,15 +21,22 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Biblioteca',
+          title: t('tabs.library'),
           tabBarIcon: ({ color, size }) => <Ionicons name="library" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="deck-builder"
         options={{
-          title: 'Deck Builder',
+          title: t('tabs.deckBuilder'),
           tabBarIcon: ({ color, size }) => <Ionicons name="albums" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: t('tabs.settings'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
     </Tabs>

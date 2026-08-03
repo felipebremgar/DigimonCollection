@@ -16,11 +16,13 @@ import {
 import { LibraryGrid } from '@/features/library/library-grid';
 import { useFilterFacets } from '@/features/library/use-filter-facets';
 import { useLibraryQuery } from '@/features/library/use-library-query';
+import { useTranslation } from '@/i18n/use-translation';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function LibraryScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const sync = useDatasetSync();
   const ready = sync.isSuccess;
 
@@ -41,14 +43,14 @@ export default function LibraryScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.header}>
-        <ThemedText type="subtitle">Biblioteca</ThemedText>
+        <ThemedText type="subtitle">{t('library.title')}</ThemedText>
 
         {ready && (
           <>
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Buscar por nome, efeito, keyword, type…"
+              placeholder={t('library.searchPlaceholder')}
               placeholderTextColor={theme.textSecondary}
               style={[styles.search, { backgroundColor: theme.backgroundElement, color: theme.text }]}
               autoCorrect={false}
@@ -57,13 +59,16 @@ export default function LibraryScreen() {
             />
             <View style={styles.controls}>
               <ThemedText type="small" themeColor="textSecondary">
-                {items.length} {searchingOrFiltering ? 'resultados' : 'impressões'}
+                {searchingOrFiltering
+                  ? t('library.results', { n: items.length })
+                  : t('library.printings', { n: items.length })}
               </ThemedText>
               <Pressable
                 onPress={() => setFilterOpen(true)}
                 style={[styles.filterButton, { backgroundColor: theme.backgroundElement }]}>
                 <ThemedText type="smallBold">
-                  Filtros{activeFilters > 0 ? ` · ${activeFilters}` : ''}
+                  {t('filters.button')}
+                  {activeFilters > 0 ? ` · ${activeFilters}` : ''}
                 </ThemedText>
               </Pressable>
             </View>
@@ -75,7 +80,7 @@ export default function LibraryScreen() {
         <ThemedView style={styles.center}>
           <ActivityIndicator />
           <ThemedText type="default" themeColor="textSecondary">
-            {sync.isPending ? 'Sincronizando o catálogo…' : 'Carregando cartas…'}
+            {sync.isPending ? t('library.syncing') : t('library.loadingCards')}
           </ThemedText>
         </ThemedView>
       )}
@@ -83,7 +88,7 @@ export default function LibraryScreen() {
       {sync.isError && (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Não foi possível carregar as cartas: {sync.error.message}
+            {t('library.loadError', { msg: sync.error.message })}
           </ThemedText>
         </ThemedView>
       )}
@@ -91,7 +96,7 @@ export default function LibraryScreen() {
       {ready && !loading && searchingOrFiltering && items.length === 0 && (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Nenhuma carta encontrada com esses critérios.
+            {t('library.noResults')}
           </ThemedText>
         </ThemedView>
       )}

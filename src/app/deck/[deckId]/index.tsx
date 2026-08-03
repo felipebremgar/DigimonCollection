@@ -14,6 +14,7 @@ import { validateDeck } from '@/features/deck-builder/deck-validation';
 import { useDeck } from '@/features/deck-builder/use-deck';
 import { useDeckStats } from '@/features/deck-builder/use-deck-stats';
 import { useDecks } from '@/features/deck-builder/use-decks';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 function DeckCardRow({ item }: { item: DeckCardItem }) {
@@ -44,6 +45,7 @@ function Zone({
   exact?: boolean;
   cards: DeckCardItem[];
 }) {
+  const { t } = useTranslation();
   const valid = exact ? count === max : count <= max;
   return (
     <View style={styles.zone}>
@@ -55,7 +57,7 @@ function Zone({
       </View>
       {cards.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Nenhuma carta ainda — toque em “Adicionar cartas”.
+          {t('deck.emptyZone')}
         </ThemedText>
       ) : (
         cards.map((c) => <DeckCardRow key={c.deckCardId} item={c} />)
@@ -66,6 +68,7 @@ function Zone({
 
 export default function DeckScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
   const id = Number(deckId);
@@ -82,10 +85,10 @@ export default function DeckScreen() {
   const missing = useDeckMissing(id, hasCards);
 
   const confirmDelete = () => {
-    Alert.alert('Excluir deck', 'Excluir este deck?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('deck.delete'), t('deck.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Excluir',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
           decks.remove(id);
@@ -97,7 +100,7 @@ export default function DeckScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: deck.data?.deck.name ?? 'Deck' }} />
+      <Stack.Screen options={{ headerShown: true, title: deck.data?.deck.name ?? t('deck.title') }} />
 
       {deck.isPending && (
         <ThemedView style={styles.center}>
@@ -108,7 +111,7 @@ export default function DeckScreen() {
       {(deck.isError || (deck.isSuccess && deck.data === null)) && (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Deck não encontrado.
+            {t('deck.notFound')}
           </ThemedText>
         </ThemedView>
       )}
@@ -123,14 +126,14 @@ export default function DeckScreen() {
               if (trimmed && trimmed !== deck.data?.deck.name) decks.rename(id, trimmed);
             }}
             style={[styles.name, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-            placeholder="Nome do deck"
+            placeholder={t('deck.namePlaceholder')}
             placeholderTextColor={theme.textSecondary}
           />
 
           <Link href={{ pathname: '/deck/[deckId]/add', params: { deckId: id } }} asChild>
             <Pressable style={[styles.addButton, { backgroundColor: theme.text }]}>
               <ThemedText type="smallBold" style={{ color: theme.background }}>
-                Adicionar cartas
+                {t('deck.addCards')}
               </ThemedText>
             </Pressable>
           </Link>
@@ -142,25 +145,25 @@ export default function DeckScreen() {
                 { backgroundColor: validation.valid ? 'rgba(58,160,106,0.18)' : 'rgba(201,119,58,0.18)' },
               ]}>
               <ThemedText type="smallBold" style={{ color: validation.valid ? '#3aa06a' : '#c9773a' }}>
-                {validation.valid ? '✓ Deck válido' : '⚠ Deck inválido'}
+                {validation.valid ? t('deck.valid') : t('deck.invalid')}
               </ThemedText>
-              {validation.errors.map((error) => (
-                <ThemedText key={error} type="small" themeColor="textSecondary">
-                  • {error}
+              {validation.issues.map((issue) => (
+                <ThemedText key={issue.key + JSON.stringify(issue.params)} type="small" themeColor="textSecondary">
+                  • {t(issue.key, issue.params)}
                 </ThemedText>
               ))}
             </View>
           )}
 
-          <Zone title="Deck principal" count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
-          <Zone title="Digi-Egg" count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
+          <Zone title={t('deck.mainZone')} count={deck.data.mainCount} max={MAIN_DECK_SIZE} exact cards={deck.data.main} />
+          <Zone title={t('deck.eggZone')} count={deck.data.eggCount} max={EGG_DECK_MAX} cards={deck.data.egg} />
 
           {hasCards && missing.data && (
             <View style={styles.zone}>
-              <ThemedText type="smallBold">O QUE FALTA (COLEÇÃO)</ThemedText>
+              <ThemedText type="smallBold">{t('deck.missingTitle')}</ThemedText>
               {missing.data.length === 0 ? (
                 <ThemedText type="small" style={{ color: '#3aa06a' }}>
-                  ✓ Você já tem todas as cartas deste deck.
+                  {t('deck.haveAll')}
                 </ThemedText>
               ) : (
                 missing.data.map((m) => (
@@ -169,11 +172,11 @@ export default function DeckScreen() {
                     <View style={styles.cardInfo}>
                       <ThemedText type="small">{m.name}</ThemedText>
                       <ThemedText type="small" themeColor="textSecondary">
-                        {m.number} · tem {m.owned}/{m.required}
+                        {m.number} · {t('deck.owned', { o: m.owned, r: m.required })}
                       </ThemedText>
                     </View>
                     <ThemedText type="smallBold" style={{ color: '#c9773a' }}>
-                      faltam {m.missing}
+                      {t('deck.missing', { n: m.missing })}
                     </ThemedText>
                   </View>
                 ))
@@ -187,13 +190,13 @@ export default function DeckScreen() {
             <Pressable
               style={[styles.exportButton, { borderColor: theme.textSecondary }]}
               onPress={() => setExportOpen(true)}>
-              <ThemedText type="smallBold">Exportar deck</ThemedText>
+              <ThemedText type="smallBold">{t('deck.export')}</ThemedText>
             </Pressable>
           )}
 
           <Pressable style={styles.deleteButton} onPress={confirmDelete}>
             <ThemedText type="smallBold" style={{ color: '#c9773a' }}>
-              Excluir deck
+              {t('deck.delete')}
             </ThemedText>
           </Pressable>
         </ScrollView>

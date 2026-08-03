@@ -1,48 +1,56 @@
 import { EGG_DECK_MAX, MAIN_DECK_SIZE } from './deck-queries';
 import type { DeckContents } from './use-deck';
 
+export interface DeckIssue {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
 export interface DeckValidation {
   valid: boolean;
-  errors: string[];
+  issues: DeckIssue[];
 }
 
 /**
- * Valida um deck (Etapa 13):
- * - deck principal com exatamente 50 cartas;
- * - Digi-Egg deck com 0 a 5 cartas;
- * - Digi-Egg só no egg deck; nada além de Digi-Egg no egg deck;
- * - cópias por carta dentro do copy_limit.
+ * Valida um deck (Etapa 13): main == 50, Digi-Egg 0..5, Digi-Egg só no egg
+ * deck (e nada além disso), e cópias dentro do copy_limit. Os problemas são
+ * retornados como chaves de tradução (i18n resolve na UI).
  */
 export function validateDeck(contents: DeckContents): DeckValidation {
-  const errors: string[] = [];
+  const issues: DeckIssue[] = [];
 
   if (contents.mainCount !== MAIN_DECK_SIZE) {
-    errors.push(
-      `O deck principal precisa de exatamente ${MAIN_DECK_SIZE} cartas (tem ${contents.mainCount}).`,
-    );
+    issues.push({
+      key: 'validation.mainSize',
+      params: { size: MAIN_DECK_SIZE, count: contents.mainCount },
+    });
   }
   if (contents.eggCount > EGG_DECK_MAX) {
-    errors.push(
-      `O Digi-Egg deck permite no máximo ${EGG_DECK_MAX} cartas (tem ${contents.eggCount}).`,
-    );
+    issues.push({
+      key: 'validation.eggMax',
+      params: { max: EGG_DECK_MAX, count: contents.eggCount },
+    });
   }
 
   for (const c of contents.main) {
     if (c.category === 'Digi-Egg') {
-      errors.push(`${c.name} é Digi-Egg e não pode ficar no deck principal.`);
+      issues.push({ key: 'validation.eggInMain', params: { name: c.name } });
     }
   }
   for (const c of contents.egg) {
     if (c.category !== 'Digi-Egg') {
-      errors.push(`${c.name} não é Digi-Egg e não pode ficar no Digi-Egg deck.`);
+      issues.push({ key: 'validation.nonEggInEgg', params: { name: c.name } });
     }
   }
 
   for (const c of [...contents.main, ...contents.egg]) {
     if (c.quantity > c.copyLimit) {
-      errors.push(`${c.name}: ${c.quantity} cópias excedem o limite de ${c.copyLimit}.`);
+      issues.push({
+        key: 'validation.copyLimit',
+        params: { name: c.name, qty: c.quantity, limit: c.copyLimit },
+      });
     }
   }
 
-  return { valid: errors.length === 0, errors };
+  return { valid: issues.length === 0, issues };
 }

@@ -5,14 +5,16 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardDetailView } from '@/features/library/card-detail';
 import { useCardDetail } from '@/features/library/use-card-detail';
+import { useTranslation } from '@/i18n/use-translation';
 
 export default function CardDetailScreen() {
+  const { t } = useTranslation();
   const { printingId } = useLocalSearchParams<{ printingId: string }>();
   const detail = useCardDetail(Number(printingId));
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: detail.data?.card.name ?? 'Carta' }} />
+      <Stack.Screen options={{ headerShown: true, title: detail.data?.card.name ?? t('cardDetail.title') }} />
 
       {detail.isPending && (
         <ThemedView style={styles.center}>
@@ -23,7 +25,7 @@ export default function CardDetailScreen() {
       {(detail.isError || (detail.isSuccess && detail.data === null)) && (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Carta não encontrada.
+            {t('cardDetail.notFound')}
           </ThemedText>
         </ThemedView>
       )}

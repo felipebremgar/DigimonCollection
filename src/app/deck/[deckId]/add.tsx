@@ -13,6 +13,7 @@ import { useDeckEditor } from '@/features/deck-builder/use-deck-editor';
 import { EMPTY_FILTERS, DEFAULT_SORT } from '@/features/library/filters';
 import type { LibraryItem } from '@/features/library/queries';
 import { useLibraryQuery } from '@/features/library/use-library-query';
+import { useTranslation } from '@/i18n/use-translation';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -20,6 +21,7 @@ const NUM_COLUMNS = 3;
 
 export default function AddCardsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
   const id = Number(deckId);
 
@@ -47,12 +49,12 @@ export default function AddCardsScreen() {
       if (!result.added) {
         showNotice(
           result.limit === 0
-            ? `${item.name} é banida (0 cópias).`
-            : `Limite de ${result.limit} cópia(s) atingido: ${item.name}.`,
+            ? t('deck.banned', { name: item.name })
+            : t('deck.limitReached', { n: result.limit, name: item.name }),
         );
       }
     },
-    [editor, showNotice],
+    [editor, showNotice, t],
   );
 
   const renderItem = useCallback(
@@ -72,14 +74,14 @@ export default function AddCardsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: 'Adicionar cartas' }} />
+      <Stack.Screen options={{ headerShown: true, title: t('deck.addCards') }} />
 
       <ThemedView type="backgroundElement" style={styles.summary}>
         <ThemedText type="smallBold" style={{ color: mainCount === MAIN_DECK_SIZE ? '#3aa06a' : theme.text }}>
-          Main {mainCount}/{MAIN_DECK_SIZE}
+          {t('deck.mainCount', { m: mainCount, M: MAIN_DECK_SIZE })}
         </ThemedText>
         <ThemedText type="smallBold" style={{ color: eggCount <= EGG_DECK_MAX ? '#3aa06a' : '#c9773a' }}>
-          Digi-Egg {eggCount}/{EGG_DECK_MAX}
+          {t('deck.eggCount', { e: eggCount, E: EGG_DECK_MAX })}
         </ThemedText>
       </ThemedView>
 
@@ -95,7 +97,7 @@ export default function AddCardsScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Buscar carta para adicionar…"
+          placeholder={t('deck.addSearchPlaceholder')}
           placeholderTextColor={theme.textSecondary}
           style={[styles.search, { backgroundColor: theme.backgroundElement, color: theme.text }]}
           autoCorrect={false}
@@ -108,7 +110,7 @@ export default function AddCardsScreen() {
         <ThemedView style={styles.center}>
           <ActivityIndicator />
           <ThemedText type="default" themeColor="textSecondary">
-            Sincronizando o catálogo…
+            {t('library.syncing')}
           </ThemedText>
         </ThemedView>
       )}

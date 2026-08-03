@@ -9,9 +9,11 @@ import { ThemedView } from '@/components/themed-view';
 import { DeckImportModal } from '@/features/deck-builder/deck-import-modal';
 import { EGG_DECK_MAX, MAIN_DECK_SIZE, type DeckSummary } from '@/features/deck-builder/deck-queries';
 import { useDecks } from '@/features/deck-builder/use-decks';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 function DeckRow({ deck, onDelete }: { deck: DeckSummary; onDelete: () => void }) {
+  const { t } = useTranslation();
   const valid = deck.mainCount === MAIN_DECK_SIZE && deck.eggCount <= EGG_DECK_MAX;
   return (
     <Link href={{ pathname: '/deck/[deckId]', params: { deckId: deck.id } }} asChild>
@@ -20,7 +22,12 @@ function DeckRow({ deck, onDelete }: { deck: DeckSummary; onDelete: () => void }
           <View style={styles.rowInfo}>
             <ThemedText type="default">{deck.name}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Main {deck.mainCount}/{MAIN_DECK_SIZE} · Digi-Egg {deck.eggCount}/{EGG_DECK_MAX}
+              {t('deckBuilder.counts', {
+                m: deck.mainCount,
+                M: MAIN_DECK_SIZE,
+                e: deck.eggCount,
+                E: EGG_DECK_MAX,
+              })}
             </ThemedText>
           </View>
           <View style={[styles.dot, { backgroundColor: valid ? '#3aa06a' : '#c9773a' }]} />
@@ -37,36 +44,37 @@ function DeckRow({ deck, onDelete }: { deck: DeckSummary; onDelete: () => void }
 
 export default function DeckBuilderScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const decks = useDecks(true);
   const [importOpen, setImportOpen] = useState(false);
 
   const createDeck = () => {
-    const id = decks.create('Novo deck');
+    const id = decks.create(t('deckBuilder.newDeckName'));
     router.push({ pathname: '/deck/[deckId]', params: { deckId: id } });
   };
 
   const confirmDelete = (deck: DeckSummary) => {
-    Alert.alert('Excluir deck', `Excluir "${deck.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => decks.remove(deck.id) },
+    Alert.alert(t('deck.delete'), t('deck.deleteNamed', { name: deck.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => decks.remove(deck.id) },
     ]);
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.header}>
-        <ThemedText type="subtitle">Deck Builder</ThemedText>
+        <ThemedText type="subtitle">{t('deckBuilder.title')}</ThemedText>
         <View style={styles.headerActions}>
           <Pressable
             style={[styles.importButton, { borderColor: theme.textSecondary }]}
             onPress={() => setImportOpen(true)}>
-            <ThemedText type="smallBold">Importar</ThemedText>
+            <ThemedText type="smallBold">{t('deckBuilder.import')}</ThemedText>
           </Pressable>
           <Pressable style={[styles.newButton, { backgroundColor: theme.text }]} onPress={createDeck}>
             <ThemedText type="smallBold" style={{ color: theme.background }}>
-              + Novo deck
+              {t('deckBuilder.newDeck')}
             </ThemedText>
           </Pressable>
         </View>
@@ -75,7 +83,7 @@ export default function DeckBuilderScreen() {
       {decks.decks.length === 0 ? (
         <ThemedView style={styles.center}>
           <ThemedText type="default" themeColor="textSecondary">
-            Nenhum deck ainda. Crie o primeiro!
+            {t('deckBuilder.empty')}
           </ThemedText>
         </ThemedView>
       ) : (

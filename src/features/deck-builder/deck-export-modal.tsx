@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 export function DeckExportModal({
@@ -17,6 +18,7 @@ export function DeckExportModal({
   text: string;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -30,10 +32,10 @@ export function DeckExportModal({
       <ThemedView style={styles.container}>
         <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
           <View style={styles.header}>
-            <ThemedText type="subtitle">Exportar deck</ThemedText>
+            <ThemedText type="subtitle">{t('export.title')}</ThemedText>
             <Pressable onPress={onClose}>
               <ThemedText type="link" themeColor="textSecondary">
-                Fechar
+                {t('common.close')}
               </ThemedText>
             </Pressable>
           </View>
@@ -47,7 +49,7 @@ export function DeckExportModal({
 
           <Pressable style={[styles.copyButton, { backgroundColor: theme.text }]} onPress={copy}>
             <ThemedText type="smallBold" style={{ color: theme.background }}>
-              {copied ? 'Copiado!' : 'Copiar código'}
+              {copied ? t('export.copied') : t('export.copy')}
             </ThemedText>
           </Pressable>
         </SafeAreaView>

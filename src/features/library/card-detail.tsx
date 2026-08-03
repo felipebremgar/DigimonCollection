@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CollectionControls } from '@/features/collection/collection-controls';
+import { useTranslation } from '@/i18n/use-translation';
 
 import type { CardDetail, DetailPrinting } from './card-detail-queries';
 import { HighlightedEffect } from './highlighted-effect';
@@ -55,6 +56,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function CardDetailView({ detail }: { detail: CardDetail }) {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState(detail.printings[0]?.id);
   const selected: DetailPrinting | undefined = useMemo(
     () => detail.printings.find((p) => p.id === selectedId) ?? detail.printings[0],
@@ -101,7 +103,7 @@ export function CardDetailView({ detail }: { detail: CardDetail }) {
       </View>
 
       {selected && (
-        <Section title="Coleção">
+        <Section title={t('cardDetail.collection')}>
           <CollectionControls printingId={selected.id} />
         </Section>
       )}
@@ -118,56 +120,56 @@ export function CardDetailView({ detail }: { detail: CardDetail }) {
       </View>
 
       <ThemedView type="backgroundElement" style={styles.attributeGrid}>
-        <Attribute label="Level" value={card.level} />
-        <Attribute label="Form" value={card.form} />
-        <Attribute label="Attribute" value={card.attribute} />
-        <Attribute label="DP" value={card.dp} />
-        <Attribute label="Play Cost" value={card.playCost} />
-        <Attribute label="Digivolve" value={card.digivolutionCost} />
-        <Attribute label="Use Cost" value={card.useCost} />
-        <Attribute label="Cópias" value={card.copyLimit} />
-        {detail.hasLink && <Attribute label="Link Cost" value={detail.linkCost ?? '—'} />}
+        <Attribute label={t('cardDetail.level')} value={card.level} />
+        <Attribute label={t('cardDetail.form')} value={card.form} />
+        <Attribute label={t('cardDetail.attribute')} value={card.attribute} />
+        <Attribute label={t('cardDetail.dp')} value={card.dp} />
+        <Attribute label={t('cardDetail.playCost')} value={card.playCost} />
+        <Attribute label={t('cardDetail.digivolve')} value={card.digivolutionCost} />
+        <Attribute label={t('cardDetail.useCost')} value={card.useCost} />
+        <Attribute label={t('cardDetail.copies')} value={card.copyLimit} />
+        {detail.hasLink && <Attribute label={t('cardDetail.linkCost')} value={detail.linkCost ?? '—'} />}
       </ThemedView>
 
       {detail.types.length > 0 && (
-        <Section title="Types">
+        <Section title={t('cardDetail.types')}>
           <View style={styles.chipRow}>
-            {detail.types.map((t) => (
-              <Chip key={t} label={t} />
+            {detail.types.map((typeName) => (
+              <Chip key={typeName} label={typeName} />
             ))}
           </View>
         </Section>
       )}
 
       {card.effect !== '' && (
-        <Section title="Efeito">
+        <Section title={t('cardDetail.effect')}>
           <HighlightedEffect text={card.effect} keywords={detail.keywords} />
         </Section>
       )}
 
       {card.inheritedEffect && (
-        <Section title="Herança">
+        <Section title={t('cardDetail.inherited')}>
           <HighlightedEffect text={card.inheritedEffect} keywords={detail.keywords} />
         </Section>
       )}
 
       {card.securityEffect && (
-        <Section title="Segurança">
+        <Section title={t('cardDetail.security')}>
           <HighlightedEffect text={card.securityEffect} keywords={detail.keywords} />
         </Section>
       )}
 
       {detail.keywords.length > 0 && (
-        <Section title="Keywords">
+        <Section title={t('cardDetail.keywords')}>
           <View style={styles.chipRow}>
-            {detail.keywords.map((k) => (
-              <Chip key={k} label={k} />
+            {detail.keywords.map((keywordName) => (
+              <Chip key={keywordName} label={keywordName} />
             ))}
           </View>
         </Section>
       )}
 
-      <Section title="Ilustração">
+      <Section title={t('cardDetail.illustration')}>
         <ThemedText type="default">{illustrator}</ThemedText>
         {selected?.printingNotes && (
           <ThemedText type="small" themeColor="textSecondary">

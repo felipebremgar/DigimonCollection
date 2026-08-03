@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { db } from '@/db/client';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 import { importDeck } from './deck-export';
@@ -20,6 +21,7 @@ export function DeckImportModal({
   onImported: (deckId: number) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +30,7 @@ export function DeckImportModal({
   const doImport = () => {
     const result = importDeck(db, text);
     if (result.imported === 0) {
-      setError('Nenhuma carta reconhecida. Verifique o formato (ex.: "4 BT1-009").');
+      setError(t('import.error'));
       return;
     }
     setText('');
@@ -41,16 +43,16 @@ export function DeckImportModal({
       <ThemedView style={styles.container}>
         <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
           <View style={styles.header}>
-            <ThemedText type="subtitle">Importar deck</ThemedText>
+            <ThemedText type="subtitle">{t('import.title')}</ThemedText>
             <Pressable onPress={onClose}>
               <ThemedText type="link" themeColor="textSecondary">
-                Fechar
+                {t('common.close')}
               </ThemedText>
             </Pressable>
           </View>
 
           <ThemedText type="small" themeColor="textSecondary">
-            Cole o código do deck (linhas “quantidade numeração”, ex.: “4 BT1-009”).
+            {t('import.help')}
           </ThemedText>
 
           <TextInput
@@ -72,14 +74,14 @@ export function DeckImportModal({
             <Pressable
               style={[styles.button, { backgroundColor: theme.backgroundElement }]}
               onPress={paste}>
-              <ThemedText type="smallBold">Colar</ThemedText>
+              <ThemedText type="smallBold">{t('import.paste')}</ThemedText>
             </Pressable>
             <Pressable
               disabled={text.trim() === ''}
               style={[styles.button, { backgroundColor: theme.text, opacity: text.trim() ? 1 : 0.5 }]}
               onPress={doImport}>
               <ThemedText type="smallBold" style={{ color: theme.background }}>
-                Importar
+                {t('import.action')}
               </ThemedText>
             </Pressable>
           </View>

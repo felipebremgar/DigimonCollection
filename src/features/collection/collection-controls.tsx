@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 import { usePrintingCollection } from './use-collection';
@@ -9,12 +10,13 @@ import { usePrintingCollection } from './use-collection';
 /** Marca cópias possuídas e wishlist de uma impressão (Etapa 15). */
 export function CollectionControls({ printingId }: { printingId: number }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const col = usePrintingCollection(printingId);
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <ThemedText type="default">Possuídas</ThemedText>
+        <ThemedText type="default">{t('collection.owned')}</ThemedText>
         <View style={styles.stepper}>
           <Pressable
             style={[styles.step, { backgroundColor: theme.backgroundElement }]}
@@ -39,7 +41,7 @@ export function CollectionControls({ printingId }: { printingId: number }) {
           type="backgroundElement"
           style={[styles.wishlist, col.wishlist && { backgroundColor: 'rgba(224,56,79,0.18)' }]}>
           <ThemedText type="smallBold" style={{ color: col.wishlist ? '#e0384f' : theme.text }}>
-            {col.wishlist ? '♥ Na wishlist' : '♡ Adicionar à wishlist'}
+            {col.wishlist ? t('collection.inWishlist') : t('collection.addWishlist')}
           </ThemedText>
         </ThemedView>
       </Pressable>

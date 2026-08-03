@@ -7,6 +7,8 @@ import { ThemedView } from '@/components/themed-view';
 import { CARD_CATEGORIES, COLORS, VERSIONS } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 
+import { useTranslation } from '@/i18n/use-translation';
+
 import { FacetSection } from './facet-section';
 import {
   countActiveFilters,
@@ -37,6 +39,7 @@ const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[];
 export function FilterSheet(props: FilterSheetProps) {
   const { visible, onClose, filters, onChange, sort, onSortChange, facets, resultCount } = props;
   const theme = useTheme();
+  const { t } = useTranslation();
   const presets = usePresets(visible);
   const [presetName, setPresetName] = useState('');
 
@@ -56,10 +59,10 @@ export function FilterSheet(props: FilterSheetProps) {
       <ThemedView style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.flex}>
           <View style={styles.headerRow}>
-            <ThemedText type="subtitle">Filtros</ThemedText>
+            <ThemedText type="subtitle">{t('filters.title')}</ThemedText>
             <Pressable onPress={() => onChange(EMPTY_FILTERS)}>
               <ThemedText type="link" themeColor="textSecondary">
-                Limpar ({countActiveFilters(filters)})
+                {t('filters.clear', { n: countActiveFilters(filters) })}
               </ThemedText>
             </Pressable>
           </View>
@@ -67,14 +70,14 @@ export function FilterSheet(props: FilterSheetProps) {
           <ScrollView contentContainerStyle={styles.content}>
             {/* Ordenação */}
             <View style={styles.block}>
-              <ThemedText type="smallBold">Ordenar por</ThemedText>
+              <ThemedText type="smallBold">{t('filters.sortBy')}</ThemedText>
               <View style={styles.chips}>
                 {SORT_KEYS.map((key) => {
                   const active = sort.key === key;
                   return (
                     <Pressable key={key} onPress={() => setSortKey(key)} style={chipStyle(active)}>
                       <ThemedText type="small" style={{ color: active ? theme.background : theme.text }}>
-                        {SORT_LABELS[key]}
+                        {t(`sort.${key}`)}
                         {active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
                       </ThemedText>
                     </Pressable>
@@ -85,7 +88,7 @@ export function FilterSheet(props: FilterSheetProps) {
 
             {/* Presets */}
             <View style={styles.block}>
-              <ThemedText type="smallBold">Presets</ThemedText>
+              <ThemedText type="smallBold">{t('filters.presets')}</ThemedText>
               {presets.presets.length > 0 && (
                 <View style={styles.chips}>
                   {presets.presets.map((preset) => (
@@ -110,7 +113,7 @@ export function FilterSheet(props: FilterSheetProps) {
                 <TextInput
                   value={presetName}
                   onChangeText={setPresetName}
-                  placeholder="Nome do preset"
+                  placeholder={t('filters.presetName')}
                   placeholderTextColor={theme.textSecondary}
                   style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
                 />
@@ -121,37 +124,37 @@ export function FilterSheet(props: FilterSheetProps) {
                     setPresetName('');
                   }}
                   style={[styles.pill, { backgroundColor: theme.backgroundElement, opacity: presetName.trim() ? 1 : 0.5 }]}>
-                  <ThemedText type="smallBold">Salvar</ThemedText>
+                  <ThemedText type="smallBold">{t('common.save')}</ThemedText>
                 </Pressable>
               </View>
             </View>
 
             <View style={styles.toggleRow}>
-              <ThemedText type="smallBold">Uma impressão por carta</ThemedText>
+              <ThemedText type="smallBold">{t('filters.onePrinting')}</ThemedText>
               <Switch
                 value={filters.onePrintingPerCard}
                 onValueChange={(v) => onChange({ ...filters, onePrintingPerCard: v })}
               />
             </View>
 
-            <FacetSection title="Cor" options={[...COLORS]} selected={filters.colors} onToggle={toggle('colors')} initiallyOpen />
-            <FacetSection title="Categoria" options={[...CARD_CATEGORIES]} selected={filters.categories} onToggle={toggle('categories')} initiallyOpen />
-            <FacetSection title="Raridade" options={facets?.rarities ?? []} selected={filters.rarities} onToggle={toggle('rarities')} />
-            <FacetSection title="Level" options={facets?.levels ?? []} selected={filters.levels} onToggle={toggle('levels')} />
-            <FacetSection title="Custo de jogo" options={facets?.playCosts ?? []} selected={filters.playCosts} onToggle={toggle('playCosts')} />
-            <FacetSection title="Custo de digivolução" options={facets?.digivolveCosts ?? []} selected={filters.digivolveCosts} onToggle={toggle('digivolveCosts')} />
-            <FacetSection title="Custo de uso" options={facets?.useCosts ?? []} selected={filters.useCosts} onToggle={toggle('useCosts')} />
-            <FacetSection title="Forma" options={facets?.forms ?? []} selected={filters.forms} onToggle={toggle('forms')} />
-            <FacetSection title="Attribute" options={facets?.attributes ?? []} selected={filters.attributes} onToggle={toggle('attributes')} />
-            <FacetSection title="Versão" options={[...VERSIONS]} selected={filters.versions} onToggle={toggle('versions')} />
-            <FacetSection title="Coleção" options={facets?.sets ?? []} selected={filters.sets} onToggle={toggle('sets')} />
-            <FacetSection title="Type" options={facets?.types ?? []} selected={filters.types} onToggle={toggle('types')} />
-            <FacetSection title="Keyword" options={facets?.keywords ?? []} selected={filters.keywords} onToggle={toggle('keywords')} />
+            <FacetSection title={t('filters.facet.colors')} options={[...COLORS]} selected={filters.colors} onToggle={toggle('colors')} initiallyOpen />
+            <FacetSection title={t('filters.facet.categories')} options={[...CARD_CATEGORIES]} selected={filters.categories} onToggle={toggle('categories')} initiallyOpen />
+            <FacetSection title={t('filters.facet.rarities')} options={facets?.rarities ?? []} selected={filters.rarities} onToggle={toggle('rarities')} />
+            <FacetSection title={t('filters.facet.levels')} options={facets?.levels ?? []} selected={filters.levels} onToggle={toggle('levels')} />
+            <FacetSection title={t('filters.facet.playCosts')} options={facets?.playCosts ?? []} selected={filters.playCosts} onToggle={toggle('playCosts')} />
+            <FacetSection title={t('filters.facet.digivolveCosts')} options={facets?.digivolveCosts ?? []} selected={filters.digivolveCosts} onToggle={toggle('digivolveCosts')} />
+            <FacetSection title={t('filters.facet.useCosts')} options={facets?.useCosts ?? []} selected={filters.useCosts} onToggle={toggle('useCosts')} />
+            <FacetSection title={t('filters.facet.forms')} options={facets?.forms ?? []} selected={filters.forms} onToggle={toggle('forms')} />
+            <FacetSection title={t('filters.facet.attributes')} options={facets?.attributes ?? []} selected={filters.attributes} onToggle={toggle('attributes')} />
+            <FacetSection title={t('filters.facet.versions')} options={[...VERSIONS]} selected={filters.versions} onToggle={toggle('versions')} />
+            <FacetSection title={t('filters.facet.sets')} options={facets?.sets ?? []} selected={filters.sets} onToggle={toggle('sets')} />
+            <FacetSection title={t('filters.facet.types')} options={facets?.types ?? []} selected={filters.types} onToggle={toggle('types')} />
+            <FacetSection title={t('filters.facet.keywords')} options={facets?.keywords ?? []} selected={filters.keywords} onToggle={toggle('keywords')} />
           </ScrollView>
 
           <Pressable style={[styles.applyButton, { backgroundColor: theme.text }]} onPress={onClose}>
             <ThemedText type="smallBold" style={{ color: theme.background }}>
-              Ver {resultCount} resultados
+              {t('filters.viewResults', { n: resultCount })}
             </ThemedText>
           </Pressable>
         </SafeAreaView>

@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useTranslation } from '@/i18n/use-translation';
 import { useTheme } from '@/hooks/use-theme';
 
 import type { CountEntry, DeckStats } from './deck-stats';
@@ -65,13 +66,14 @@ function Section({
 }
 
 export function DeckStatsView({ stats }: { stats: DeckStats }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
-      <Section title="Curva de custo (main)" entries={stats.costCurve} />
-      <Section title="Cores" entries={stats.colors} colorFor={(l) => COLOR_HEX[l] ?? '#888'} />
-      <Section title="Levels" entries={stats.levels} />
-      <Section title="Categorias" entries={stats.categories} />
-      <Section title="Types" entries={stats.types} />
+      <Section title={t('stats.costCurve')} entries={stats.costCurve} />
+      <Section title={t('stats.colors')} entries={stats.colors} colorFor={(l) => COLOR_HEX[l] ?? '#888'} />
+      <Section title={t('stats.levels')} entries={stats.levels} />
+      <Section title={t('stats.categories')} entries={stats.categories} />
+      <Section title={t('stats.types')} entries={stats.types} />
     </View>
   );
 }
